@@ -74,6 +74,14 @@ class ReceiverCell: UITableViewCell {
     }
 }
 
+class WarningCell: UITableViewCell {
+    @IBOutlet weak var msgLabel: UILabel!
+    
+    override func prepareForReuse() {
+        msgLabel.text = nil
+    }
+}
+
 class ConversationsTBCell: UITableViewCell {
     
     @IBOutlet weak var profilePic: RoundedImageView!

@@ -251,6 +251,10 @@ extension UIViewController {
 
 
 extension UIImage {
+    func getData(quality: CGFloat) -> Data {
+        return UIImageJPEGRepresentation(self, quality)!
+    }
+    
     func resizeImageForMatch(newSize: CGSize) -> UIImage {
         let aspectWidth = newSize.width / self.size.width
         let aspectHeight = newSize.height / self.size.height
@@ -350,6 +354,12 @@ extension UIImage {
         let resized = self.resizeImage(targetSize: CGSize(width: 1125, height: 2436))
         let compressed = UIImage(data: UIImageJPEGRepresentation(resized, 0.3)!)!
         return compressed
+    }
+}
+
+extension Data {
+    func getImage() -> UIImage {
+        return UIImage(data: self)!.fixOrientation()
     }
 }
 

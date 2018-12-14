@@ -252,6 +252,7 @@ class NavVC: UINavigationController, UICollectionViewDelegate, UICollectionViewD
     @IBAction func logOutUser(_ sender: Any) {
         User.logOutUser { (status) in
             if status == true {
+                defaults.set(false, forKey: "secondTime")
                 self.dismiss(animated: true, completion: nil)
             }
         }

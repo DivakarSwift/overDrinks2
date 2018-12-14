@@ -269,7 +269,7 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                                         if let blocked = data[Auth.auth().currentUser!.uid] {
                                             if blocked {
                                                 self.clusterManager.remove(annotation)
-                                                }
+                                            }
                                         }
                                         group.leave()
                                     }

@@ -172,6 +172,7 @@ class ConversationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
         switch self.items.count {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "Empty Cell")!
+            cell.selectionStyle = .none
             return cell
         default:
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ConversationsTBCell
@@ -181,7 +182,12 @@ class ConversationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
             switch self.items[indexPath.row].lastMessage.type {
             case .text:
                 let message = self.items[indexPath.row].lastMessage.content as! String
-                cell.messageLabel.text = message
+                if message == " " {
+                    cell.messageLabel.text = "Start a conversation!"
+                }
+                else {
+                    cell.messageLabel.text = message
+                }
             case .location:
                 cell.messageLabel.text = "Location"
             default:
@@ -211,31 +217,32 @@ class ConversationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
-        
-        let blockAction = UITableViewRowAction(style: .default, title: "Block") { action, indexPath in
-            let myAlert = UIAlertController(title: "Block this user?", message: "Blocking prevents this user from contacting you and being able to see your location. This action is permanent.", preferredStyle: .alert)
-            let yesAction = UIAlertAction(title: "Yes", style: .default, handler: { _ in
-                User.blockUser(blockedUser: self.items[indexPath.row].user, completion: {
-                    self.items.remove(at: indexPath.row)
-                    self.tableView.reloadData()
+        if items.count > 0 {
+            let blockAction = UITableViewRowAction(style: .default, title: "Block") { action, indexPath in
+                let myAlert = UIAlertController(title: "Block this user?", message: "Blocking prevents this user from contacting you and being able to see your location. This action is permanent.", preferredStyle: .alert)
+                let yesAction = UIAlertAction(title: "Yes", style: .default, handler: { _ in
+                    User.blockUser(blockedUser: self.items[indexPath.row].user, completion: {
+                        self.items.remove(at: indexPath.row)
+                        self.tableView.reloadData()
+                    })
                 })
-            })
-            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+                
+                myAlert.addAction(yesAction)
+                myAlert.addAction(cancelAction)
+                self.present(myAlert, animated: true, completion: nil)
+            }
+            blockAction.backgroundColor = .red
             
-            myAlert.addAction(yesAction)
-            myAlert.addAction(cancelAction)
-            self.present(myAlert, animated: true, completion: nil)
+            return [blockAction]
         }
-        blockAction.backgroundColor = .red
-        
-        return [blockAction]
+        return []
     }
     
        
     //MARK: ViewController lifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.fetchData()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -250,6 +257,7 @@ class ConversationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
             self.alert(message: "Please check your internet connection and try again.", title: "Internet connection is not available")
         }
         else {
+            self.fetchData()
             self.customization()
             if let selectionIndexPath = self.tableView.indexPathForSelectedRow {
                 self.tableView.deselectRow(at: selectionIndexPath, animated: animated)

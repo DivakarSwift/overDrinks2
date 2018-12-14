@@ -8,13 +8,13 @@
 
 import UIKit
 import Eureka
-import ViewRow
 import Disk
 import Firebase
 import CloudKit
 import Reachability
 import NVActivityIndicatorView
 import GeoFire
+import ViewRow
 
 class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegate, NVActivityIndicatorViewable {
     
@@ -36,37 +36,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         super.viewDidLoad()
         
         changeEurekaText()
-        
-        if Disk.exists("myPhotos.json", in: .documents) {
-            myPhotos = try! Disk.retrieve("myPhotos.json", from: .documents, as: [ProfilePic].self)
-        }
-        else {
-            for i in 0...5 {
-                let profilePic = ProfilePic()
-                profilePic.hasPhoto = false
-                profilePic.s3Key = Auth.auth().currentUser!.uid + "-\(i)"
-                profilePic.imageData = UIImageJPEGRepresentation(UIImage(named: "profile pic")!, 1.0)
-                myPhotos.append(profilePic)
-            }
-            try? Disk.save(myPhotos, to: .documents, as: "myPhotos.json")
-        }
-        
-        if !defaults.bool(forKey: "secondTime") { // if first time, check cloud, otherwise use saved info
-            defaults.set(false, forKey: "receive")
-            defaults.set(false, forKey: "buy")
-            
-            checkS3()
-            defaults.set(true, forKey: "secondTime")
-        }
-        
-        // setup filters
-        if let _ = defaults.array(forKey: "filters") as? [Bool] {
-        }
-        else {
-            var filters = [Bool](repeating: true, count: 5)
-            defaults.set(filters, forKey: "filters")
-        }
-        
+        setupUserDefaults()
         setupNav()
         setupForm()
         
@@ -87,7 +57,38 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         else {
             self.updateForm()
             self.determineMyCurrentLocation()
+            self.housekeeping()
         }
+    }
+    
+    func housekeeping() {
+        // remove convos
+        Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child("conversations").observe(.value, with: { snapshot in
+            if snapshot.exists() {
+                for child in snapshot.children {
+                    let childSnap = child as! DataSnapshot
+                    let data = childSnap.value as! [String: String]
+                    let location = data["location"]
+                    Database.database().reference().child("conversations").child(location!).observe(.value, with: { (snap) in
+                        if snap.exists() {
+                            for child in snap.children {
+                                let firstMsg = (child as! DataSnapshot).value as! [String : Any]
+                                let sender = firstMsg["fromID"] as! String
+                                let recip = firstMsg["toID"] as! String
+                                let creationTime = firstMsg["timestamp"] as! Double
+                                if Date().timeIntervalSince1970 - creationTime > 18 * 60 * 60 { //
+                                    Database.database().reference().child("conversations").child(location!).removeValue()
+                                    Database.database().reference().child("users").child(sender).child("conversations").child(recip).removeValue()
+                                    Database.database().reference().child("users").child(recip).child("conversations").child(sender).removeValue()
+                                }
+                                break
+                            }
+                        }
+                    })
+                }
+                
+            }
+        })
     }
     
     func checkS3() {
@@ -191,9 +192,9 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                 if let bday = dateRow.value {
                     let ageComponents = Calendar.current.dateComponents([.year], from: bday, to: Date())
                     let age = ageComponents.year!
-                    bdayLabel.title = age > 21 ? "\(age) years old" : "Under 21 years old"
+                    bdayLabel.title = age >= 21 ? "\(age) years old" : "Under 21 years old"
                     defaults.set(age > 21 ? "\(age) years old" : "Under 21 years old", forKey: "age")
-                    underage = age > 21 ? false : true
+                    underage = age >= 21 ? false : true
                     bdayLabel.updateCell()
                 }
             }
@@ -211,7 +212,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                     break
                 }
             }
-        }
+        } 
         
         if let section = form.sectionBy(tag: "section1") {
             section.evaluateHidden()
@@ -268,13 +269,26 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
     
     func setupForm() {
         form
+            /*
+        // Upgrades
+        +++ Section("Upgrades")
+        <<< ButtonRow("moreLikes") {
+            $0.title = "Add more likes for tonight"
+            }
+        <<< ButtonRow("unlimitedLikes") {
+            $0.title = "Get unlimited likes for the month"
+        }
+        <<< SwitchRow("pilot") {
+            $0.title = "Get pilot status"
+        } */
+            
         // WHAT I WANT
-        +++ Section(header: "I would like to...", footer: "Note: Desires only remain active for 4 hours. Tap refresh to reset the timer.") { section in
+        +++ Section(header: "I would like to...", footer: "Note: Desires only remain active for 4 hours. The longer your desire is active, the more likely you are you to be seen. Tap refresh to reset the timer.") { section in
             section.tag = "section1"
             section.hidden = Condition.function(["name", "birthday", "manage", "profilePic", "sex"], { form in
                 if let _ = (form.rowBy(tag: "name") as? TextRow)?.value {
                     if !self.underage {
-                        if self.myPhotos.flatMap({ $0.hasPhoto} ).contains(true) {
+                        if self.myPhotos.flatMap({$0.hasPhoto}).contains(true) {
                             if let segRow: SegmentedRow<String> = form.rowBy(tag: "sex") {
                                 if let _ = segRow.value {
                                     self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
@@ -389,7 +403,6 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                 self.startAnimating()
                 User.info(forUserID: Auth.auth().currentUser!.uid, completion: { user in
                     DispatchQueue.main.async {
-                        self.stopAnimating()
                         row.value = user.name
                         row.updateCell()
                         defaults.set(user.name.trimmingCharacters(in: .whitespaces), forKey: "name")
@@ -474,10 +487,10 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                         defaults.set(date, forKey: "birthday")
                         let ageComponents = Calendar.current.dateComponents([.year], from: date, to: Date())
                         let age = ageComponents.year!
-                        self.underage = age > 21 ? false : true
+                        self.underage = age >= 21 ? false : true
                         
                         if let bdayLabel = self.form.rowBy(tag: "validBday") {
-                            bdayLabel.title = age > 21 ? "\(age) years old" : "Under 21 years old"
+                            bdayLabel.title = age >= 21 ? "\(age) years old" : "Under 21 years old"
                             let value = ["age": bdayLabel.title!]
                             Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child("credentials").updateChildValues(value, withCompletionBlock: { (errr, _) in
                                 print("updated age")
@@ -486,7 +499,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                             bdayLabel.updateCell()
                         }
                     }
-            }
+                }
             
             <<< LabelRow("validBday") {
                 $0.title = ""
@@ -495,6 +508,27 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                     cell.textLabel?.textColor = self.underage ? UIColor.red : UIColor.black
                     cell.textLabel?.textAlignment = .right
                 }
+            
+            <<< TextAreaRow("blurb") {
+                $0.placeholder = "Your tag line in 40 characters or fewer"
+                $0.add(rule: RuleMaxLength(maxLength: 40))
+                $0.validationOptions = .validatesAlways
+                $0.textAreaHeight = .dynamic(initialTextViewHeight: 40)
+                $0.value = defaults.object(forKey: "blurb") as? String ?? ""
+                $0.onCellHighlightChanged { cell, row in
+                    let value = ["blurb": row.value]
+                    Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child("credentials").updateChildValues(value, withCompletionBlock: { (errr, _) in
+                        if errr == nil {
+                            print("updated blurb")
+                            defaults.set(row.value, forKey: "blurb")
+                        }
+                    })
+                }.cellUpdate { cell, row in
+                    if !row.isValid {
+                        row.value = String(row.value!.prefix(40))
+                    }
+                }
+            }
             
             // MY PICTURES
             +++ Section("My Profile pictures") { section in
@@ -524,14 +558,6 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                 .cellSetup { (cell, row) in
                     cell.height = { return CGFloat(200) }
                     
-                    cell.view = UIImageView()
-                    cell.contentView.addSubview(cell.view!)
-                    cell.view?.isUserInteractionEnabled = true
-                    
-                    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.toManagePhotos))
-                    cell.view?.addGestureRecognizer(tapGesture)
-                    
-                    //  Get something to display
                     var image = UIImage(named: "profile pic")!
                     for (index, pic) in self.myPhotos.enumerated() {
                         if pic.hasPhoto {
@@ -539,24 +565,47 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                             break
                         }
                     }
+                    image = image.resizeImage(targetSize: CGSize(width: 200, height: 200))
+                    cell.view = UIImageView()
+                    cell.contentView.addSubview(cell.view!)
+                    cell.view?.isUserInteractionEnabled = true
+                    
+                    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.toManagePhotos))
+                    cell.view?.addGestureRecognizer(tapGesture)
                     
                     cell.view!.image = image
                     cell.view!.contentMode = .scaleAspectFit
-                    
-                    //cell.view!.layer.cornerRadius = 300
+                    //cell.view!.layer.cornerRadius = 100
                     cell.view!.layer.masksToBounds = true
-                    //cell.view!.layer.borderWidth = 1.5
                     cell.view!.clipsToBounds = true
                     cell.clipsToBounds = true
             }
         
             <<< ButtonRow("view") {
-                $0.title = "View Pictures"
+                $0.title = "View Profile"
                 $0.onCellSelection( { (cell, row) in
                     self.performSegue(withIdentifier: "toPicturesFromProfile", sender: self)
                 })
-        }
+            }
         
+            <<< ButtonRow("logout") {
+                $0.title = "Log Out"
+                $0.onCellSelection( { (cell, row) in
+                    let myAlert = UIAlertController(title: "Log out?", message: nil, preferredStyle: .alert)
+                    let yesAction = UIAlertAction(title: "Yes", style: .default, handler: { _ in
+                        User.logOutUser { (status) in
+                            if status == true {
+                                defaults.set(false, forKey: "secondTime")
+                                self.dismiss(animated: true, completion: nil)
+                            }
+                        }
+                    })
+                    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+                    myAlert.addAction(yesAction)
+                    myAlert.addAction(cancelAction)
+                    self.present(myAlert, animated: true, completion: nil)
+                })
+            }
     }
     
     @objc func toManagePhotos() {
@@ -573,7 +622,9 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         
         if let nc = segue.destination as? UINavigationController {
             if let destination = nc.topViewController as? CustomTabVC {
-                destination.firebaseID = Auth.auth().currentUser!.uid
+                destination.firebaseIDs = [Auth.auth().currentUser!.uid]
+                destination.index = 0
+                destination.ages = [defaults.string(forKey: "age")!]
             }
         }
     }
@@ -627,5 +678,71 @@ extension StatusVC {
             cell.textLabel?.font = self.defaultFont
             cell.detailTextLabel?.font = self.defaultFont
         }
+        
+        TextAreaRow.defaultCellSetup =  { cell, row in
+            cell.textView.textAlignment = .center
+            cell.textView.font = UIFont(name: "AvenirNext-Italic", size: 16)!
+            cell.placeholderLabel?.textAlignment = .center
+            cell.placeholderLabel?.font = UIFont(name: "AvenirNext-Italic", size: 16)!
+        }
     }
+    
+    func setupUserDefaults() {
+        if Disk.exists("myPhotos.json", in: .documents) {
+            myPhotos = try! Disk.retrieve("myPhotos.json", from: .documents, as: [ProfilePic].self)
+        }
+        else {
+            for i in 0...5 {
+                let profilePic = ProfilePic()
+                profilePic.hasPhoto = false
+                profilePic.s3Key = Auth.auth().currentUser!.uid + "-\(i)"
+                profilePic.imageData = UIImageJPEGRepresentation(UIImage(named: "profile pic")!, 1.0)
+                myPhotos.append(profilePic)
+            }
+            try? Disk.save(myPhotos, to: .documents, as: "myPhotos.json")
+        }
+        
+        if !defaults.bool(forKey: "secondTime") { // if first time, check cloud, otherwise use saved info
+            defaults.set(false, forKey: "receive")
+            defaults.set(false, forKey: "buy")
+            
+            checkS3()
+            
+            if let bday = defaults.object(forKey: "birthday") as? Date {
+                let ageComponents = Calendar.current.dateComponents([.year], from: bday, to: Date())
+                let age = ageComponents.year!
+                self.underage = age >= 21 ? false : true
+                
+                let label = age >= 21 ? "\(age) years old" : "Under 21 years old"
+                let value = ["age": label]
+                
+                Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child("credentials").updateChildValues(value, withCompletionBlock: { (errr, _) in
+                    print("updated age")
+                })
+            }
+            
+            defaults.set(true, forKey: "secondTime")
+        }
+        
+        // setup filters
+        if let _ = defaults.array(forKey: "filters") as? [Bool] {
+        }
+        else {
+            var filters = [Bool](repeating: true, count: 5)
+            defaults.set(filters, forKey: "filters")
+        }
+        
+        if let _ = defaults.object(forKey: "minAge") as? Int {
+        }
+        else {
+            defaults.set(21, forKey: "minAge")
+        }
+        
+        if let _ = defaults.object(forKey: "maxAge") as? Int {
+        }
+        else {
+            defaults.set(87, forKey: "maxAge")
+        }
+    }
+    
 }

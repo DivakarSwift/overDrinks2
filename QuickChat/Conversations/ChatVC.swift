@@ -55,6 +55,12 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
     var initialLocation: CGPoint!
     var tableViewShift: CGFloat = 0
     var showTimestamp: Bool = false
+    var age: String!
+    lazy var rightButton: UIBarButtonItem = {
+        let image = UIImage.init(named: "profile pic")?.withRenderingMode(.alwaysOriginal)
+        let button = UIBarButtonItem.init(image: image, style: .plain, target: self, action: #selector(self.photoIconTapped))
+        return button
+    }()
 
     //MARK: Methods
     func customization() {
@@ -72,6 +78,49 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
         self.timeStampOutlet.tintColor = .white
     }
     
+    func checkMessageCount() {
+        Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child("conversations").child(self.currentUser!.id).observe(.value, with: { (snapshot) in
+            if snapshot.exists() {
+                let data = snapshot.value as! [String: String]
+                let location = data["location"]!
+                var counter: Int = 0
+                Database.database().reference().child("conversations").child(location).observe(.childAdded, with: { (snap) in
+                    if snap.exists() {
+                        let message = snap.value as! [String: Any]
+                        let sender = message["fromID"] as! String
+                        if sender == Auth.auth().currentUser!.uid {
+                            counter += 1
+                            if counter == 11 {
+                                self.bottomConstraint.constant = 0
+                                UIView.animate(withDuration: 0.3) {
+                                    self.inputBar.layoutIfNeeded()
+                                    self.inputBar.isHidden = true
+                                }
+                            }
+                        }
+                    }
+                })
+            }
+        })
+    }
+    
+    func displayClickableProfile() {
+        self.navigationItem.rightBarButtonItems = [timeStampOutlet, rightButton]
+        let image = currentUser?.profilePic
+        let contentSize = CGSize.init(width: 28, height: 28)
+        UIGraphicsBeginImageContextWithOptions(contentSize, false, 0.0)
+        let _  = UIBezierPath.init(roundedRect: CGRect.init(origin: CGPoint.zero, size: contentSize), cornerRadius: 14).addClip()
+        image?.draw(in: CGRect(origin: CGPoint.zero, size: contentSize))
+        let path = UIBezierPath.init(roundedRect: CGRect.init(origin: CGPoint.zero, size: contentSize), cornerRadius: 14)
+        path.lineWidth = 2
+        UIColor.white.setStroke()
+        path.stroke()
+        let finalImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!.withRenderingMode(.alwaysOriginal)
+        UIGraphicsEndImageContext()
+        DispatchQueue.main.async {
+            self.rightButton.image = finalImage
+        }
+    }
     
     //Downloads messages
     func fetchData() {
@@ -211,6 +260,16 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
     }
     
     // Handle photo tap
+    @objc func photoIconTapped() {
+        Database.database().reference().child("users").child(currentUser!.id).child("credentials").observeSingleEvent(of: .value, with: { snapshot in
+            if snapshot.exists() {
+                let data = snapshot.value as! [String: String]
+                self.age = String(data["age"]!.split(separator: " ").first!)
+                self.performSegue(withIdentifier: "showProfileFromChat", sender: self)
+            }
+        })
+    }
+    
     @objc func senderPhotoTapped(_ gesture: UITapGestureRecognizer) {
         let tapLocation = gesture.location(in: self.tableView)
         if let tapIndexPath = self.tableView.indexPathForRow(at: tapLocation) {
@@ -220,13 +279,13 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
         }
     }
     
-
-    
     // MARK: Navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let nc = segue.destination as? UINavigationController {
             if let destination = nc.topViewController as? CustomTabVC {
-                destination.firebaseID = currentUser!.id
+                destination.firebaseIDs = [currentUser!.id]
+                destination.index = 0
+                destination.ages = [age]
             }
         }
     }
@@ -246,91 +305,105 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        switch self.items[indexPath.row].owner {
-        case .receiver:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Receiver", for: indexPath) as! ReceiverCell
-            cell.clearCellData()
+        if indexPath.row == 0 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "cell1", for: indexPath) as! WarningCell
+            cell.selectionStyle = .none
             
-            let messageDate = Date.init(timeIntervalSince1970: TimeInterval(self.items[indexPath.row].timestamp))
-            let dateformatter = DateFormatter.init()
-            dateformatter.dateFormat = "MMM, d"
-            let date = dateformatter.string(from: messageDate)
-            cell.dateLabel.text = date == dateformatter.string(from: Date()) ? "" : date
-            cell.dateLabel.isHidden = showTimestamp ? false : true
-            
-            let timeformatter = DateFormatter.init()
-            timeformatter.timeStyle = .short
-            let time = timeformatter.string(from: messageDate)
-            cell.timeLabel.text = time
-            cell.timeLabel.isHidden = showTimestamp ? false : true
-            
-            switch self.items[indexPath.row].type {
-            case .text:
-                cell.message.text = self.items[indexPath.row].content as! String
-            case .photo:
-                if let image = self.items[indexPath.row].image {
-                    cell.messageBackground.image = image
-                    cell.message.isHidden = true
-                } else {
-                    cell.messageBackground.image = UIImage.init(named: "loading")
-                    self.items[indexPath.row].downloadImage(indexpathRow: indexPath.row, completion: { (state, index) in
-                        if state == true {
-                            DispatchQueue.main.async {
-                                self.tableView.reloadData()
-                            }
-                        }
-                    })
-                }
-            case .location:
-                cell.messageBackground.image = UIImage.init(named: "location")
-                cell.message.isHidden = true
-            }
-            return cell
-        case .sender:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Sender", for: indexPath) as! SenderCell
-            cell.clearCellData()
-            cell.profilePic.image = self.currentUser?.profilePic
-            
-            let messageDate = Date.init(timeIntervalSince1970: TimeInterval(self.items[indexPath.row].timestamp))
-            let dateformatter = DateFormatter.init()
-            dateformatter.dateFormat = "MMM, d"
-            let date = dateformatter.string(from: messageDate)
-            cell.dateLabel.text = date == dateformatter.string(from: Date()) ? "" : date
-            cell.dateLabel.isHidden = showTimestamp ? false : true
-            
-            let timeformatter = DateFormatter.init()
-            timeformatter.timeStyle = .short
-            let time = timeformatter.string(from: messageDate)
-            cell.timeLabel.text = time
-            cell.timeLabel.isHidden = showTimestamp ? false : true
-            
-            switch self.items[indexPath.row].type {
-            case .text:
-                cell.message.text = self.items[indexPath.row].content as! String
-            case .photo:
-                if let image = self.items[indexPath.row].image {
-                    cell.messageBackground.image = image
-                    cell.message.isHidden = true
-                } else {
-                    cell.messageBackground.image = UIImage.init(named: "loading")
-                    self.items[indexPath.row].downloadImage(indexpathRow: indexPath.row, completion: { (state, index) in
-                        if state == true {
-                            DispatchQueue.main.async {
-                                self.tableView.reloadData()
-                            }
-                        }
-                    })
-                }
-            case .location:
-                cell.messageBackground.image = UIImage.init(named: "location")
-                cell.message.isHidden = true
-            }
-            
-            let profileTapGesture = UITapGestureRecognizer(target: self, action: #selector(self.senderPhotoTapped))
-            profileTapGesture.delegate = self
-            cell.profilePic.addGestureRecognizer(profileTapGesture)
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "h:mm a , MMM d"
+            let endPoint = self.items[indexPath.row].timestamp + (18 * 60 * 60)
+            let endPointString = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(endPoint))).replacingOccurrences(of: ",", with: "on")
+            cell.msgLabel.text = "Move quickly and efficiently. This chat disappears at \(endPointString). You will each have 10 messages with a 140 character limit to find each other and chat over drinks."
             
             return cell
+        }
+        else {
+            switch self.items[indexPath.row].owner {
+            case .receiver:
+                let cell = tableView.dequeueReusableCell(withIdentifier: "Receiver", for: indexPath) as! ReceiverCell
+                cell.clearCellData()
+                
+                let messageDate = Date.init(timeIntervalSince1970: TimeInterval(self.items[indexPath.row].timestamp))
+                let dateformatter = DateFormatter.init()
+                dateformatter.dateFormat = "MMM, d"
+                let date = dateformatter.string(from: messageDate)
+                cell.dateLabel.text = date == dateformatter.string(from: Date()) ? "" : date
+                cell.dateLabel.isHidden = showTimestamp ? false : true
+                
+                let timeformatter = DateFormatter.init()
+                timeformatter.timeStyle = .short
+                let time = timeformatter.string(from: messageDate)
+                cell.timeLabel.text = time
+                cell.timeLabel.isHidden = showTimestamp ? false : true
+                
+                switch self.items[indexPath.row].type {
+                case .text:
+                    cell.message.text = self.items[indexPath.row].content as! String
+                case .photo:
+                    if let image = self.items[indexPath.row].image {
+                        cell.messageBackground.image = image
+                        cell.message.isHidden = true
+                    } else {
+                        cell.messageBackground.image = UIImage.init(named: "loading")
+                        self.items[indexPath.row].downloadImage(indexpathRow: indexPath.row, completion: { (state, index) in
+                            if state == true {
+                                DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
+                            }
+                        })
+                    }
+                case .location:
+                    cell.messageBackground.image = UIImage.init(named: "location")
+                    cell.message.isHidden = true
+                }
+                return cell
+            case .sender:
+                let cell = tableView.dequeueReusableCell(withIdentifier: "Sender", for: indexPath) as! SenderCell
+                cell.clearCellData()
+                cell.profilePic.image = self.currentUser?.profilePic
+                
+                let messageDate = Date.init(timeIntervalSince1970: TimeInterval(self.items[indexPath.row].timestamp))
+                let dateformatter = DateFormatter.init()
+                dateformatter.dateFormat = "MMM, d"
+                let date = dateformatter.string(from: messageDate)
+                cell.dateLabel.text = date == dateformatter.string(from: Date()) ? "" : date
+                cell.dateLabel.isHidden = showTimestamp ? false : true
+                
+                let timeformatter = DateFormatter.init()
+                timeformatter.timeStyle = .short
+                let time = timeformatter.string(from: messageDate)
+                cell.timeLabel.text = time
+                cell.timeLabel.isHidden = showTimestamp ? false : true
+                
+                switch self.items[indexPath.row].type {
+                case .text:
+                    cell.message.text = self.items[indexPath.row].content as! String
+                case .photo:
+                    if let image = self.items[indexPath.row].image {
+                        cell.messageBackground.image = image
+                        cell.message.isHidden = true
+                    } else {
+                        cell.messageBackground.image = UIImage.init(named: "loading")
+                        self.items[indexPath.row].downloadImage(indexpathRow: indexPath.row, completion: { (state, index) in
+                            if state == true {
+                                DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
+                            }
+                        })
+                    }
+                case .location:
+                    cell.messageBackground.image = UIImage.init(named: "location")
+                    cell.message.isHidden = true
+                }
+                
+                let profileTapGesture = UITapGestureRecognizer(target: self, action: #selector(self.senderPhotoTapped))
+                profileTapGesture.delegate = self
+                cell.profilePic.addGestureRecognizer(profileTapGesture)
+                
+                return cell
+            }
         }
     }
     
@@ -351,8 +424,12 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
             self.inputAccessoryView?.isHidden = true
         default: break
         }
-        
-        
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        guard let text = textField.text else { return true }
+        let newLength = text.count + string.count - range.length
+        return newLength <= 140
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -404,6 +481,8 @@ class ChatVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UITe
         self.customization()
         self.fetchData()
         setupNav()
+        checkMessageCount()
+        displayClickableProfile()
     }
 }
 

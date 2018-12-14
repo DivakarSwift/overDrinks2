@@ -12,13 +12,14 @@ import Disk
 import Photos
 import CloudKit
 import Firebase
+import SwiftMessages
 import AWSS3
 
 protocol MyPhotosVCDelegate: class {
     func changedPhotos(newPhotos: [UIImage], newChangedPhoto: [Bool])
 }
 
-class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UIGestureRecognizerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UIGestureRecognizerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPopoverPresentationControllerDelegate {
     
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var doneOutlet: UIBarButtonItem!
@@ -75,9 +76,9 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
         
         for (index, pic) in myPhotos.enumerated() {
             if pic.hasPhoto {
-                let image = UIImage(data: self.myPhotos[index].imageData!)!
+                let image = self.myPhotos[index].imageData?.getImage()
                 
-                let imageData = UIImageJPEGRepresentation(image, 0.2)
+                let imageData = UIImageJPEGRepresentation(image!, 0.2)
                 
                 let storageRef = Storage.storage().reference().child("usersProfilePics").child(userID)
                 storageRef.putData(imageData!, metadata: nil, completion: { (metadata, err) in
@@ -163,6 +164,7 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
             return nil
         }
     }
+    
   
     func checkPermission() {
         let photoAuthorizationStatus = PHPhotoLibrary.authorizationStatus()
@@ -185,8 +187,8 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
         
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = cellSize
-        layout.sectionInset = UIEdgeInsets(top: 20, left: 20, bottom: 10, right: 20)
-        layout.minimumLineSpacing = 0
+        layout.sectionInset = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        layout.minimumLineSpacing = 30
         layout.minimumInteritemSpacing = 0
         
         collectionView.setCollectionViewLayout(layout, animated: true)
@@ -202,9 +204,11 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
     }
     
     @IBAction func donePressed(_ sender: UIBarButtonItem) {
+        sender.isEnabled = false
         let _ = self.navigationController?.popViewController(animated: true)
     }
     
+    // OBJC gestures
     @objc func longPressGesture(gesture: UILongPressGestureRecognizer) {
         switch gesture.state {
         case .began:
@@ -243,6 +247,7 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell1", for: indexPath) as! ProfileCell
         cell.backgroundColor = UIColor.clear
         
@@ -253,14 +258,13 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
         cell.profilePic.layer.borderColor = GlobalVariables.purple.cgColor
         
         cell.deleteIcon.isHidden = myPhotos[indexPath.row].hasPhoto ? false : true
-        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.deletePic))
         cell.deleteIcon.tag = indexPath.row
         cell.deleteIcon.addGestureRecognizer(tapGesture)
         
         return cell
     }
-    
+   
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         selectedIndexPath = indexPath
         
@@ -301,17 +305,17 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
             }
         }
     }
-
 }
 
 extension MyPhotosVC {
     func openLibrary() {
         if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
             let imagePicker = UIImagePickerController()
+            imagePicker.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor.white]
+            imagePicker.navigationBar.tintColor = .white
             imagePicker.delegate = self
             imagePicker.sourceType = .photoLibrary
             imagePicker.allowsEditing = false
-            imagePicker.navigationBar.tintColor = .white
             self.present(imagePicker, animated: true, completion: nil)
         }
     }
@@ -319,6 +323,8 @@ extension MyPhotosVC {
     func takePhoto() {
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
             let imagePicker = UIImagePickerController()
+            imagePicker.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor.white]
+            imagePicker.navigationBar.tintColor = .white
             imagePicker.delegate = self
             imagePicker.sourceType = .camera
             imagePicker.allowsEditing = false
@@ -361,4 +367,5 @@ extension MyPhotosVC {
 class ProfileCell: UICollectionViewCell {
     @IBOutlet weak var profilePic: UIImageView!
     @IBOutlet weak var deleteIcon: UIImageView!
+    @IBOutlet weak var captionIcon: UIImageView!
 }
