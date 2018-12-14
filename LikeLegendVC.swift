@@ -49,7 +49,7 @@ class LikeLegendVC: UIViewController, UITableViewDataSource, UITableViewDelegate
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4
+        return 3
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -59,17 +59,14 @@ class LikeLegendVC: UIViewController, UITableViewDataSource, UITableViewDelegate
         
         switch indexPath.row {
         case 0:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
+            cell.picView.image = UIImage(named: "roundedLike")!
+            cell.descrip.text = "Like this person"
         case 1:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
+            cell.picView.image = UIImage(named: "roundedDislike")!
+            cell.descrip.text = "Pass on this person"
         case 2:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
-        case 3:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
+            cell.picView.image = UIImage(named: "roundedLogo")!
+            cell.descrip.text = "Toast this person!"
         default: ()
         }
         

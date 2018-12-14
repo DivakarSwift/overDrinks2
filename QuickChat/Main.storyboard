@@ -2215,7 +2215,6 @@
         <!--Filter OptionsTVC-->
         <scene sceneID="6eD-mM-BjB">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="Vdt-nG-fok" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <tableViewController storyboardIdentifier="FilterOptionsTVC" id="lcV-dm-Wl1" customClass="FilterOptionsTVC" customModule="QuickChat" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="DwQ-sA-CmC">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
@@ -2309,6 +2308,7 @@
                         </barButtonItem>
                     </navigationItem>
                 </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Vdt-nG-fok" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="5100" y="312.59370314842579"/>
         </scene>
@@ -2469,7 +2469,6 @@
         <!--Navigation Controller-->
         <scene sceneID="HH7-oJ-9iI">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="PUl-mF-onh" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Dmo-rB-brG" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="zXj-99-7VK">
@@ -2481,6 +2480,7 @@
                         <segue destination="lcV-dm-Wl1" kind="relationship" relationship="rootViewController" id="QIg-Tr-QBV"/>
                     </connections>
                 </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="PUl-mF-onh" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="4160.8000000000002" y="312.59370314842579"/>
         </scene>
@@ -2645,9 +2645,9 @@
         <image name="name" width="24" height="24"/>
         <image name="password" width="24" height="24"/>
         <image name="profile pic" width="100" height="100"/>
-        <image name="roundedDislike" width="120" height="120"/>
-        <image name="roundedLike" width="123" height="123"/>
-        <image name="roundedLogo" width="425" height="425"/>
+        <image name="roundedDislike" width="486" height="486"/>
+        <image name="roundedLike" width="486" height="486"/>
+        <image name="roundedLogo" width="486" height="486"/>
         <image name="selectCamera" width="32" height="25"/>
         <image name="selectLocation" width="32" height="25"/>
         <image name="selectMessage" width="32" height="25"/>
@@ -2656,7 +2656,7 @@
         <image name="stoplight" width="26" height="26"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="WNN-0L-hFP"/>
+        <segue reference="RUS-9g-L7i"/>
         <segue reference="jRm-k3-TGI"/>
     </inferredMetricsTieBreakers>
 </document>

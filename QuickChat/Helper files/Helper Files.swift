@@ -231,7 +231,7 @@ extension UIViewController {
         let title = "You've run out of toasts!"
         let message = "Upgrade your status or wait until 11 AM to refill your toasts. (For purposes of beta testing, have another toast)"
         
-        let popup = PopupDialog(title: title, message: message, image: UIImage(named: "superLike")!)
+        let popup = PopupDialog(title: title, message: message, image: UIImage(named: "logo")!)
         
         // Create buttons
         let getMoreButton = DefaultButton(title: "UPGRADE STATUS") {

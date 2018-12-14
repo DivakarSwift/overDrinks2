@@ -62,7 +62,7 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
             self.alert(message: "Please check your internet connection and try again.", title: "Internet connection is not available")
         }
         else if !defaults.bool(forKey: "buy") {
-            let myAlert = UIAlertController(title: "Please become active", message: nil, preferredStyle: .alert)
+            let myAlert = UIAlertController(title: "Please become active to begin searching", message: nil, preferredStyle: .alert)
             let okAction = UIAlertAction(title: "OK", style: .cancel, handler: { _ in
                 self.tabBarController?.selectedIndex = 0
             })
@@ -293,11 +293,11 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                             else if Int(annotation.age.split(separator: " ").first!)! > defaults.integer(forKey: "maxAge") { // max age filters
                                 self.clusterManager.remove(annotation)
                                 group.leave()
-                            }
+                            } /*
                             else if self.likedIDs.contains(annotation.firebaseID) { // remove already liked/disliked ppl
                                 self.clusterManager.remove(annotation)
                                 group.leave()
-                            }
+                            } */
                             else { // remove if blocked
                                 Database.database().reference().child("users").child(annotation.firebaseID).child("blockList").observe(.value, with: { snapshot in
                                     if snapshot.exists() {
@@ -377,24 +377,6 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
             }
             
             return view
-        }
-        else if let annotation = annotation as? MyPointAnnotation {
-            let reuseId = "person"
-            
-            var anView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId)
-            if anView == nil {
-                anView = MKAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
-                anView?.canShowCallout = true
-            }
-            else {
-                anView?.annotation = annotation
-            }
-            
-            anView?.image = UIImage(named: annotation.imageName)
-            anView?.contentMode = .scaleAspectFill
-            anView?.frame.size = CGSize(width: 35, height: 35)
-            
-            return anView
         }
         else {
             guard let annotation = annotation as? PeopleAnnotation, let style = annotation.style else { return nil }

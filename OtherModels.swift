@@ -11,9 +11,6 @@ import UIKit
 import MapKit
 import Cluster
 
-class MyPointAnnotation: MKPointAnnotation {
-    var imageName: String!
-}
 
 class ProfilePic: Codable {
     var hasPhoto: Bool!
@@ -33,6 +30,7 @@ class PeopleAnnotation: Annotation {
     var blurb: String?
     var profilePic: UIImage?
 }
+
 
 class startClock {
     var startTime: CFAbsoluteTime!

@@ -48,7 +48,7 @@ class LegendVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4
+        return 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -56,21 +56,8 @@ class LegendVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell1", for: indexPath) as! LikeLegendCell
         cell.selectionStyle = .none
         
-        switch indexPath.row {
-        case 0:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
-        case 1:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
-        case 2:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
-        case 3:
-            cell.picView.image = UIImage(named: "flagIcon")!
-            cell.descrip.text = "blah"
-        default: ()
-        }
+        cell.picView.image = UIImage(named: "roundedLogo")!
+        cell.descrip.text = "Person wants to raise a toast!"
         
         return cell
     }

@@ -100,6 +100,10 @@ class CustomTabVC: UIViewController, NVActivityIndicatorViewable, UIPopoverPrese
                         self.superlikeView.isHidden = false
                         self.dislikeView.isHidden = false
                         self.likeView.isHidden = false
+                        if !defaults.bool(forKey: "firstPerson") {
+                            self.showLegend()
+                            defaults.set(true, forKey: "firstPerson")
+                        }
                     }
                     if self.likedIDs.contains(self.selectedUser!.id) {
                         self.superlikeView.isHidden = true
