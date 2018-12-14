@@ -406,6 +406,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                         row.value = user.name
                         row.updateCell()
                         defaults.set(user.name.trimmingCharacters(in: .whitespaces), forKey: "name")
+                        self.stopAnimating()
                     }
                 })
                 

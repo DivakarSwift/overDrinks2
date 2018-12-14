@@ -10,26 +10,16 @@ import UIKit
 
 class eulaVC: UIViewController {
 
+    @IBOutlet weak var textView: UITextView!
+    @IBOutlet weak var agreementOutlet: UIButton!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        
+        agreementOutlet.titleLabel?.numberOfLines = 0
+        textView.text = "EULA Agreement"
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
+    
 
 }

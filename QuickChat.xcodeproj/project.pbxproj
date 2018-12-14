@@ -35,9 +35,9 @@
 		861C6F372149285B00F258C5 /* LegendVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861C6F362149285B00F258C5 /* LegendVC.swift */; };
 		866C2FD821C409AA00E57817 /* eulaVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FD721C409AA00E57817 /* eulaVC.swift */; };
 		866C2FDA21C409EB00E57817 /* LikeLegendVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FD921C409EB00E57817 /* LikeLegendVC.swift */; };
+		866C2FDC21C40C2400E57817 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 866C2FDB21C40C2400E57817 /* GoogleService-Info.plist */; };
 		867C77002148A9CE00AFCB0E /* FilterOptionsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */; };
 		868E0E5D214ADCFC0057D825 /* ResetPasswordVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */; };
-		86BBAA2021598CB900865466 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 86BBAA1F21598CB900865466 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,9 +72,9 @@
 		861C6F362149285B00F258C5 /* LegendVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegendVC.swift; sourceTree = "<group>"; };
 		866C2FD721C409AA00E57817 /* eulaVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = eulaVC.swift; sourceTree = "<group>"; };
 		866C2FD921C409EB00E57817 /* LikeLegendVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeLegendVC.swift; sourceTree = "<group>"; };
+		866C2FDB21C40C2400E57817 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = SOURCE_ROOT; };
 		867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterOptionsTVC.swift; sourceTree = "<group>"; };
 		868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetPasswordVC.swift; sourceTree = "<group>"; };
-		86BBAA1F21598CB900865466 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = SOURCE_ROOT; };
 		B8041C4B4A9DA4F0F53D2BDE /* Pods_QuickChat.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QuickChat.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8FBFCFF82B6EB57B02FA375 /* Pods-QuickChat.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QuickChat.release.xcconfig"; path = "Pods/Target Support Files/Pods-QuickChat/Pods-QuickChat.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -161,8 +161,8 @@
 				224AFAAA1D86900B004E7CCD /* Helper Files */,
 				22A92BB71D59EBD6005D76F7 /* Assets.xcassets */,
 				224AFA9C1D867DE7004E7CCD /* Main.storyboard */,
-				86BBAA1F21598CB900865466 /* GoogleService-Info.plist */,
 				22A92BBC1D59EBD6005D76F7 /* Info.plist */,
+				866C2FDB21C40C2400E57817 /* GoogleService-Info.plist */,
 				22EA578E1E1D28DD0008FFB2 /* newMessage.wav */,
 			);
 			path = QuickChat;
@@ -311,7 +311,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22A92BB81D59EBD6005D76F7 /* Assets.xcassets in Resources */,
-				86BBAA2021598CB900865466 /* GoogleService-Info.plist in Resources */,
+				866C2FDC21C40C2400E57817 /* GoogleService-Info.plist in Resources */,
 				22EA578F1E1D28DD0008FFB2 /* newMessage.wav in Resources */,
 				224AFA9D1D867DE7004E7CCD /* Main.storyboard in Resources */,
 			);

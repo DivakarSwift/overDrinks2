@@ -13,6 +13,7 @@ import SwipeMenuViewController
 import Firebase
 import Alamofire
 import PopupDialog
+import AWSS3
 
 class CustomTabVC: UIViewController, NVActivityIndicatorViewable, UIPopoverPresentationControllerDelegate {
     
@@ -37,19 +38,22 @@ class CustomTabVC: UIViewController, NVActivityIndicatorViewable, UIPopoverPrese
     var operation: CKQueryOperation!
     var ages: [String]!
     var likedIDs: [String] = []
+    
+    var flagButton: UIBarButtonItem!
+    var infoBarButtonItem: UIBarButtonItem!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         doneOutlet.tintColor = .white
         
-        let flagButton = UIBarButtonItem(image: UIImage(named: "flagIcon")!, style: .plain, target: self, action: #selector(self.showOptions))
+        flagButton = UIBarButtonItem(image: UIImage(named: "flagIcon")!, style: .plain, target: self, action: #selector(self.showOptions))
         flagButton.tintColor = .white
         
         let infoButton = UIButton(type: .infoLight)
         infoButton.addTarget(self, action: #selector(self.showLegend), for: .touchUpInside)
         infoButton.tintColor = .white
-        let infoBarButtonItem = UIBarButtonItem(customView: infoButton)
+        infoBarButtonItem = UIBarButtonItem(customView: infoButton)
         navigationItem.rightBarButtonItems = [infoBarButtonItem, flagButton]
         
         superlikeView.isHidden = true
@@ -105,17 +109,17 @@ class CustomTabVC: UIViewController, NVActivityIndicatorViewable, UIPopoverPrese
                 }
             })
             
-            queryCloud()
+            queryS3()
         }
     }
     
-    func getUsedIDs(completion: @escaping () -> Void) {
+    func getUsedIDs(completion: @escaping () -> Void) { // IDs that have already been liked/disliked
         likedIDs = []
         Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).observeSingleEvent(of: .value, with: { snapshot in
             if snapshot.exists() {
                 for snap in snapshot.children {
                     let child = snap as! DataSnapshot
-                    if child.key != "credentials" && child.key != "conversations" && child.key != "reference" {
+                    if child.key != "credentials" && child.key != "conversations" && child.key != "reference" && child.key != "blockList" {
                         let data = child.value as! [String: Any]
                         let dataAge = Date().timeIntervalSince1970 - (data["timeStamp"] as! Double)
                         if dataAge > 18 * 60 * 60 {
@@ -134,61 +138,79 @@ class CustomTabVC: UIViewController, NVActivityIndicatorViewable, UIPopoverPrese
         })
     }
     
-    func queryCloud() {
+    func queryS3() {
         let timer = startClock()
         timer.start()
         
-        let predicate = NSPredicate(format: "firebaseID == %@", firebaseIDs[index]) //
-        let query = CKQuery(recordType: "CloudProfilePictures", predicate: predicate)
-        operation = CKQueryOperation(query: query)
-        operation.qualityOfService = .userInitiated
-        operation.queuePriority = .veryHigh
-        
-        operation.queryCompletionBlock = { cursor, error in
-            if self.viewControllers.count == 0 {
-                self.stopAnimating()
+        // Update Blurb
+        Database.database().reference().child("users").child(self.firebaseIDs[self.index]).child("credentials").observeSingleEvent(of: .value, with: { snapshot in
+            if snapshot.exists() {
+                let data = snapshot.value as! [String: Any]
+                if let blurb = data["blurb"] as? String {
+                    DispatchQueue.main.async {
+                        self.blurbLabel.text = blurb == "" ? nil : "\"\(blurb)\""
+                    }
+                }
+                else {
+                    self.blurbLabel.text = nil
+                }
             }
-        }
-        
-        operation.recordFetchedBlock = { record in
-            //self.timer.invalidate()
-            let assets = record["pictureAssets"] as! [CKAsset]
-            var captions = [String](repeating: " ", count: 6)
-            if let caps = record["captions"] as? [String] {
-                captions = caps
+            else {
+                self.blurbLabel.text = nil
             }
-            self.viewControllers = []
-            for (index,asset) in assets.enumerated() {
-                let vc = self.storyboard?.instantiateViewController(withIdentifier: "PicturesVC") as! PicturesVC
-                vc.picture = asset.image()
-                vc.caption = captions[index].trim()
-                self.viewControllers.append(vc)
+            timer.stop()
+        })
+        
+        // Configure AWS Cognito Credentials
+        let credentialsProvider = AWSCognitoCredentialsProvider(regionType:.USEast1, identityPoolId:"us-east-1:b00b05b6-8a73-44ed-be9f-5a727fa9160e")
+        let configuration = AWSServiceConfiguration(region:.USEast1, credentialsProvider:credentialsProvider)
+        AWSServiceManager.default().defaultServiceConfiguration = configuration
+        
+        // Set up AWS Transfer Manager Request
+        for i in 0...5 { // go through all photos
+            let imageName = "image\(i).jpg"
+            let downloadedFilePath = NSTemporaryDirectory().appendingFormat("downloaded-\(imageName)")
+            let downloadedFileURL = URL(fileURLWithPath: downloadedFilePath)
+            let S3BucketName = "overdrinks"
+            let downloadRequest = AWSS3TransferManagerDownloadRequest()
+            downloadRequest?.key = "\(firebaseIDs[index])-\(i)"
+            downloadRequest?.bucket = S3BucketName
+            downloadRequest?.downloadingFileURL = downloadedFileURL
+            downloadRequest?.downloadProgress = { (bytesWritten, totalBytesWritten, totalBytesExpectedtoWrite) -> Void in
+                let progressRatio = Float(bytesWritten) / Float(totalBytesWritten)
+                //print(progressRatio)
+                DispatchQueue.main.async {
+                    if progressRatio >= 1 {
+                        
+                    }
+                }
             }
             
-            DispatchQueue.main.async {
-                self.activityIndicator.stopAnimating()
-                self.swipeMenuView.reloadData()
-                Database.database().reference().child("users").child(self.firebaseIDs[self.index]).child("credentials").observeSingleEvent(of: .value, with: { snapshot in
-                    if snapshot.exists() {
-                        let data = snapshot.value as! [String: Any]
-                        if let blurb = data["blurb"] as? String {
-                            DispatchQueue.main.async {
-                                self.blurbLabel.text = blurb == "" ? nil : "\"\(blurb)\""
-                            }
-                        }
-                        else {
-                            self.blurbLabel.text = nil
+            let transferManager = AWSS3TransferManager.default()
+            transferManager.download(downloadRequest!).continueWith(block: { (task) -> Any? in
+                if let error = task.error {
+                    print("downloadFile() failed: (\(error))")
+                }
+                    
+                else if task.result != nil {
+                    if let data = try? Data(contentsOf: downloadedFileURL) {
+                        let vc = self.storyboard?.instantiateViewController(withIdentifier: "PicturesVC") as! PicturesVC
+                        vc.picture = data.getImage()
+                        vc.caption = "this will be removed"
+                        self.viewControllers.append(vc)
+                        DispatchQueue.main.async {
+                            self.activityIndicator.stopAnimating()
+                            self.swipeMenuView.reloadData()
                         }
                     }
-                    else {
-                        self.blurbLabel.text = nil
-                    }
-                    timer.stop()
-                })
-            }
+                }
+                else {
+                    print("Unexpected empty result")
+                }
+                timer.stop()
+                return nil
+            })
         }
-        
-        database.add(operation)
     }
     
     @objc func showLegend() {

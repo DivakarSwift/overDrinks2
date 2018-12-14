@@ -120,7 +120,7 @@ extension AppDelegate: MessagingDelegate {
     /// This method will be called whenever FCM receives a new, default FCM token for your
     /// Firebase project's Sender ID.
     /// You can send this token to your application server to send notifications to this device.
-    func messaging(_ messaging: Messaging, didRefreshRegistrationToken fcmToken: String) {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String) {
         guard  let newToken = InstanceID.instanceID().token() else { return }
         AppDelegate.DEVICEID = newToken
         print(newToken)

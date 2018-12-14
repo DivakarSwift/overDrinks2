@@ -80,8 +80,7 @@
                                     </mask>
                                 </variation>
                                 <connections>
-                                    <action selector="agreePressed:" destination="keO-jb-0S0" eventType="touchUpInside" id="nC4-kM-pKv"/>
-                                    <action selector="switchViews:" destination="rVC-Ig-Azx" eventType="touchUpInside" id="AZd-xF-3gx"/>
+                                    <segue destination="rVC-Ig-Azx" kind="show" id="yAw-Su-nP7"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -111,8 +110,8 @@
                         </variation>
                     </view>
                     <connections>
-                        <outlet property="agreeOutlet" destination="v1Z-pF-8cv" id="X0x-EB-Iaf"/>
-                        <outlet property="textView" destination="76i-NO-1wL" id="4nS-Jl-mA8"/>
+                        <outlet property="agreementOutlet" destination="v1Z-pF-8cv" id="PA3-40-lEu"/>
+                        <outlet property="textView" destination="76i-NO-1wL" id="86W-9W-GCa"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="lh4-bu-bpQ" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -2411,7 +2410,7 @@
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="qdR-Iw-JPo">
                                 <rect key="frame" x="0.0" y="20" width="375" height="627.5"/>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Caption:" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="10" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rhk-KF-bSE">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="1000" text="Caption:" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="10" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rhk-KF-bSE">
                                 <rect key="frame" x="16" y="647.5" width="343" height="19.5"/>
                                 <constraints>
                                     <constraint firstAttribute="height" relation="lessThanOrEqual" constant="90" id="E5Y-9P-nCM"/>
@@ -2650,6 +2649,6 @@
     </resources>
     <inferredMetricsTieBreakers>
         <segue reference="RUS-9g-L7i"/>
-        <segue reference="DbD-Ii-zen"/>
+        <segue reference="jRm-k3-TGI"/>
     </inferredMetricsTieBreakers>
 </document>

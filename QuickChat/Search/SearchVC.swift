@@ -97,6 +97,9 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
         
     }
     
+    func filterChanged(newFilters: [Bool]) {
+        
+    }
     
     @IBAction func legendPressed(_ sender: UIBarButtonItem) {
         let popoverContent = self.storyboard?.instantiateViewController(withIdentifier: "LegendVC") as! LegendVC
