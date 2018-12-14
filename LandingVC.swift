@@ -40,7 +40,7 @@ class LandingVC: UIViewController {
             let vc = self.storyboard?.instantiateViewController(withIdentifier: "TabBarController") as! UITabBarController
             self.present(vc, animated: false, completion: nil)
         case .welcome:
-            let vc = self.storyboard?.instantiateViewController(withIdentifier: "Welcome") as! WelcomeVC
+            let vc = self.storyboard?.instantiateViewController(withIdentifier: "eulaVC") as! eulaVC
             self.present(vc, animated: false, completion: nil)
         }
     }
@@ -61,7 +61,8 @@ class LandingVC: UIViewController {
                     weakSelf = nil
                 }
             })
-        } else {
+        }
+        else {
             self.pushTo(viewController: .welcome)
         }
     }

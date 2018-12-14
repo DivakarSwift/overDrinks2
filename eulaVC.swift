@@ -1,28 +1,24 @@
 //
-//  PicturesVC.swift
+//  eulaVC.swift
 //  QuickChat
 //
-//  Created by Tony Jiang on 9/9/18.
+//  Created by Tony Jiang on 12/14/18.
 //  Copyright © 2018 Mexonis. All rights reserved.
 //
 
 import UIKit
-import Firebase
 
-class PicturesVC: UIViewController {
+class eulaVC: UIViewController {
 
-    @IBOutlet weak var pictureImageView: UIImageView!
-    @IBOutlet weak var captionLabel: UILabel!
-    
-    var picture: UIImage!
-    var caption: String!
-    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        pictureImageView.image = picture
-        captionLabel.text = caption.trim()
-        self.view.setNeedsLayout()
+        // Do any additional setup after loading the view.
+    }
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
     }
     
 

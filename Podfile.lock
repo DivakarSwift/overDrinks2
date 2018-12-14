@@ -64,6 +64,7 @@ PODS:
   - SwiftMessages (5.0.1):
     - SwiftMessages/App (= 5.0.1)
   - SwiftMessages/App (5.0.1)
+  - SwipeMenuViewController (3.0.0)
   - ViewRow (0.3.0):
     - Eureka (>= 4.0.0)
 
@@ -83,6 +84,7 @@ DEPENDENCIES:
   - PopupDialog (~> 0.7.1)
   - ReachabilitySwift
   - SwiftMessages (~> 5.0.1)
+  - SwipeMenuViewController
   - ViewRow (from `https://github.com/EurekaCommunity/ViewRow`)
 
 SPEC REPOS:
@@ -112,6 +114,7 @@ SPEC REPOS:
     - Protobuf
     - ReachabilitySwift
     - SwiftMessages
+    - SwipeMenuViewController
 
 EXTERNAL SOURCES:
   ViewRow:
@@ -148,8 +151,9 @@ SPEC CHECKSUMS:
   Protobuf: 1eb9700044745f00181c136ef21b8ff3ad5a0fd5
   ReachabilitySwift: 35720ffea59c1c76d15f885be77fd33e33985427
   SwiftMessages: 32ce3cfc8388b41aae56ff4853cc752a20101147
+  SwipeMenuViewController: 572a6fcd7fa95c3d744c760d5e836896817c5735
   ViewRow: e278428ff53da5eab18b191d3e19a16f3e299fc1
 
-PODFILE CHECKSUM: bff42a04a285789cdf5bf7cbf6add110908ac02a
+PODFILE CHECKSUM: 2416ff34c3f5cfcbd38046921264dd211982ab89
 
 COCOAPODS: 1.6.0.beta.1

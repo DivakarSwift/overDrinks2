@@ -33,6 +33,8 @@
 		861A47DD2145F1D2002D316D /* CustomTabVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47DC2145F1D2002D316D /* CustomTabVC.swift */; };
 		861A47DF2145F2CF002D316D /* PicturesVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47DE2145F2CF002D316D /* PicturesVC.swift */; };
 		861C6F372149285B00F258C5 /* LegendVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861C6F362149285B00F258C5 /* LegendVC.swift */; };
+		866C2FD821C409AA00E57817 /* eulaVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FD721C409AA00E57817 /* eulaVC.swift */; };
+		866C2FDA21C409EB00E57817 /* LikeLegendVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FD921C409EB00E57817 /* LikeLegendVC.swift */; };
 		867C77002148A9CE00AFCB0E /* FilterOptionsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */; };
 		868E0E5D214ADCFC0057D825 /* ResetPasswordVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */; };
 		86BBAA2021598CB900865466 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 86BBAA1F21598CB900865466 /* GoogleService-Info.plist */; };
@@ -68,6 +70,8 @@
 		861A47DC2145F1D2002D316D /* CustomTabVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabVC.swift; sourceTree = "<group>"; };
 		861A47DE2145F2CF002D316D /* PicturesVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PicturesVC.swift; sourceTree = "<group>"; };
 		861C6F362149285B00F258C5 /* LegendVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegendVC.swift; sourceTree = "<group>"; };
+		866C2FD721C409AA00E57817 /* eulaVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = eulaVC.swift; sourceTree = "<group>"; };
+		866C2FD921C409EB00E57817 /* LikeLegendVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeLegendVC.swift; sourceTree = "<group>"; };
 		867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterOptionsTVC.swift; sourceTree = "<group>"; };
 		868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetPasswordVC.swift; sourceTree = "<group>"; };
 		86BBAA1F21598CB900865466 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -110,6 +114,8 @@
 				868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */,
 				867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */,
 				861C6F362149285B00F258C5 /* LegendVC.swift */,
+				866C2FD721C409AA00E57817 /* eulaVC.swift */,
+				866C2FD921C409EB00E57817 /* LikeLegendVC.swift */,
 			);
 			name = Other;
 			path = ..;
@@ -354,6 +360,7 @@
 				"${BUILT_PRODUCTS_DIR}/Protobuf/Protobuf.framework",
 				"${BUILT_PRODUCTS_DIR}/ReachabilitySwift/Reachability.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftMessages/SwiftMessages.framework",
+				"${BUILT_PRODUCTS_DIR}/SwipeMenuViewController/SwipeMenuViewController.framework",
 				"${BUILT_PRODUCTS_DIR}/ViewRow/ViewRow.framework",
 				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
 			);
@@ -374,6 +381,7 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Protobuf.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Reachability.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftMessages.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwipeMenuViewController.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ViewRow.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
 			);
@@ -390,6 +398,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				861A47DD2145F1D2002D316D /* CustomTabVC.swift in Sources */,
+				866C2FDA21C409EB00E57817 /* LikeLegendVC.swift in Sources */,
 				2284BC451DC3582F00E36E8A /* ChatVC.swift in Sources */,
 				2274709E1DCCF9BF00645401 /* LandingVC.swift in Sources */,
 				861A47D821446D4A002D316D /* MyPhotosVC.swift in Sources */,
@@ -404,6 +413,7 @@
 				224AFAA91D86890A004E7CCD /* WelcomeVC.swift in Sources */,
 				220698841E066E4900F2284B /* Helper Files.swift in Sources */,
 				861C6F372149285B00F258C5 /* LegendVC.swift in Sources */,
+				866C2FD821C409AA00E57817 /* eulaVC.swift in Sources */,
 				22873DAA1DC790550021690E /* Message.swift in Sources */,
 				22EA57911E1D32520008FFB2 /* VCCells.swift in Sources */,
 				861A47CF21445A29002D316D /* SearchVC.swift in Sources */,

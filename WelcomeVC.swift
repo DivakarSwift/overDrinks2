@@ -23,6 +23,7 @@
 
 import UIKit
 import Photos
+import PopupDialog
 
 class WelcomeVC: UIViewController, UITextFieldDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIPopoverPresentationControllerDelegate {
 
@@ -152,7 +153,7 @@ class WelcomeVC: UIViewController, UITextFieldDelegate, UINavigationControllerDe
             item.resignFirstResponder()
         }
         self.showLoading(state: true)
-        User.registerUser(withName: self.registerNameField.text!, email: self.registerEmailField.text!, password: self.registerPasswordField.text!, profilePic: self.profilePicView.image!) { [weak weakSelf = self] (status) in
+        User.registerUser(withName: self.registerNameField.text!, email: self.registerEmailField.text!, password: self.registerPasswordField.text!, profilePic: self.profilePicView.image!) { [weak weakSelf = self] (status, errorMsg) in
             DispatchQueue.main.async {
                 weakSelf?.showLoading(state: false)
                 for item in self.inputFields {
@@ -162,6 +163,13 @@ class WelcomeVC: UIViewController, UITextFieldDelegate, UINavigationControllerDe
                     weakSelf?.pushTomainView()
                     weakSelf?.profilePicView.image = UIImage.init(named: "profile pic")
                 } else {
+                    let popup = PopupDialog(title: errorMsg, message: nil)
+                    let okButton = DefaultButton(title: "OK") { }
+                    
+                    popup.addButtons([okButton])
+                    self.present(popup, animated: true, completion: {
+                        self.shake(object: sender as AnyObject)
+                    })
                     for item in (weakSelf?.waringLabels)! {
                         item.isHidden = false
                     }

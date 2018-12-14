@@ -22,6 +22,7 @@ pod 'GeoFire'
 pod 'AWSS3'
 pod 'PopupDialog', '~> 0.7.1'
 pod 'SwiftMessages', '~> 5.0.1'
+pod 'SwipeMenuViewController'
 
 post_install do |installer|
     # Your list of targets here.

@@ -35,7 +35,7 @@ class User: NSObject {
     var profilePic: UIImage
     
     //MARK: Methods
-    class func registerUser(withName: String, email: String, password: String, profilePic: UIImage, completion: @escaping (Bool) -> Swift.Void) {
+    class func registerUser(withName: String, email: String, password: String, profilePic: UIImage, completion: @escaping (Bool, String?) -> Swift.Void) {
         Auth.auth().createUser(withEmail: email, password: password, completion: { (user, error) in
             if error == nil {
                 user?.user.sendEmailVerification(completion: nil)
@@ -51,7 +51,7 @@ class User: NSObject {
                                         if errr == nil {
                                             let userInfo = ["email" : email, "password" : password]
                                             UserDefaults.standard.set(userInfo, forKey: "userInformation")
-                                            completion(true)
+                                            completion(true, nil)
                                         }
                                     })
                                 }
@@ -61,7 +61,7 @@ class User: NSObject {
                 })
             }
             else {
-                completion(false)
+                completion(false, error!.localizedDescription)
             }
         })
     }
@@ -100,7 +100,7 @@ class User: NSObject {
                 URLSession.shared.dataTask(with: link!, completionHandler: { (data, response, error) in
                     if error == nil {
                         let profilePic = UIImage.init(data: data!)
-                        let user = User.init(name: name, email: email, id: forUserID, FCMToken: FCMToken, profilePic: profilePic!)
+                        let user = User.init(name: name, email: email, id: forUserID, FCMToken: FCMToken, profilePic: profilePic ?? UIImage(named: "profile pic")!)
                         completion(user)
                     }
                 }).resume()
@@ -140,16 +140,28 @@ class User: NSObject {
         if let currentUserID = Auth.auth().currentUser?.uid {
             // remove blockedUser convo
             Database.database().reference().child("users").child(currentUserID).child("conversations").child(blockedUser.id).observeSingleEvent(of: .value, with: { (snapshot) in
-                let data = snapshot.value as! [String: String]
-                let location = data["location"]!
-                
-                Database.database().reference().child("conversations").child(location).removeValue(completionBlock: { (error, _) in
-                    // remove convo location data from current user
-                    Database.database().reference().child("users").child(currentUserID).child("conversations").child(blockedUser.id).removeValue()
+                if snapshot.exists() {
+                    let data = snapshot.value as! [String: String]
+                    let location = data["location"]!
                     
-                    // remove convo location data from blocked user
-                    Database.database().reference().child("users").child(blockedUser.id).child("conversations").child(currentUserID).removeValue()
-                    
+                    Database.database().reference().child("conversations").child(location).removeValue(completionBlock: { (error, _) in
+                        // remove convo location data from current user
+                        Database.database().reference().child("users").child(currentUserID).child("conversations").child(blockedUser.id).removeValue()
+                        
+                        // remove convo location data from blocked user
+                        Database.database().reference().child("users").child(blockedUser.id).child("conversations").child(currentUserID).removeValue()
+                        
+                        // add reciprocal user to blocklist for current and blocked user
+                        let blockUserID = [blockedUser.id: true]
+                        Database.database().reference().child("users").child(currentUserID).child("blockList").updateChildValues(blockUserID, withCompletionBlock: { (error, _) in
+                            
+                            Database.database().reference().child("users").child(blockedUser.id).child("blockList").updateChildValues([currentUserID: true], withCompletionBlock: { (error, _) in
+                                completion()
+                            })
+                        })
+                    })
+                }
+                else { //in event of flagging user there's no convo to delete
                     // add reciprocal user to blocklist for current and blocked user
                     let blockUserID = [blockedUser.id: true]
                     Database.database().reference().child("users").child(currentUserID).child("blockList").updateChildValues(blockUserID, withCompletionBlock: { (error, _) in
@@ -158,9 +170,7 @@ class User: NSObject {
                             completion()
                         })
                     })
-                    
-                    
-                })
+                }
             })
         }
     }
