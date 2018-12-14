@@ -8,18 +8,8 @@
 
 import Foundation
 import UIKit
-import CloudKit
 import MapKit
 import Cluster
-
-class CloudProfilePictures {
-    var name: String?
-    var age: String?
-    var firebaseID: String?
-    var pictureAssets: [CKAsset] = []
-    var captions: [String] = []
-    var changedPhoto: [Bool] = []
-}
 
 class MyPointAnnotation: MKPointAnnotation {
     var imageName: String!
@@ -41,6 +31,7 @@ class PeopleAnnotation: Annotation {
     var superlike: Bool = false
     var deviceToken: String!
     var blurb: String?
+    var profilePic: UIImage?
 }
 
 class startClock {

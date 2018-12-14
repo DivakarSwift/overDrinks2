@@ -26,7 +26,6 @@
 		861A47CA21444C2A002D316D /* StatusVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47C921444C2A002D316D /* StatusVC.swift */; };
 		861A47CF21445A29002D316D /* SearchVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47CE21445A29002D316D /* SearchVC.swift */; };
 		861A47D12144626C002D316D /* OtherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47D02144626C002D316D /* OtherModels.swift */; };
-		861A47D42144627E002D316D /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 861A47D32144627E002D316D /* CloudKit.framework */; };
 		861A47D621446285002D316D /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 861A47D521446285002D316D /* StoreKit.framework */; };
 		861A47D821446D4A002D316D /* MyPhotosVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47D721446D4A002D316D /* MyPhotosVC.swift */; };
 		861A47DA2145E75D002D316D /* ClusterResultsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861A47D92145E75D002D316D /* ClusterResultsVC.swift */; };
@@ -36,6 +35,7 @@
 		866C2FD821C409AA00E57817 /* eulaVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FD721C409AA00E57817 /* eulaVC.swift */; };
 		866C2FDA21C409EB00E57817 /* LikeLegendVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FD921C409EB00E57817 /* LikeLegendVC.swift */; };
 		866C2FDC21C40C2400E57817 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 866C2FDB21C40C2400E57817 /* GoogleService-Info.plist */; };
+		866C2FDE21C429A600E57817 /* CaptionsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866C2FDD21C429A600E57817 /* CaptionsVC.swift */; };
 		867C77002148A9CE00AFCB0E /* FilterOptionsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */; };
 		868E0E5D214ADCFC0057D825 /* ResetPasswordVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */; };
 /* End PBXBuildFile section */
@@ -63,7 +63,6 @@
 		861A47CE21445A29002D316D /* SearchVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchVC.swift; sourceTree = "<group>"; };
 		861A47D02144626C002D316D /* OtherModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherModels.swift; sourceTree = "<group>"; };
 		861A47D22144627C002D316D /* QuickChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QuickChat.entitlements; sourceTree = "<group>"; };
-		861A47D32144627E002D316D /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
 		861A47D521446285002D316D /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		861A47D721446D4A002D316D /* MyPhotosVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPhotosVC.swift; sourceTree = "<group>"; };
 		861A47D92145E75D002D316D /* ClusterResultsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterResultsVC.swift; sourceTree = "<group>"; };
@@ -73,6 +72,7 @@
 		866C2FD721C409AA00E57817 /* eulaVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = eulaVC.swift; sourceTree = "<group>"; };
 		866C2FD921C409EB00E57817 /* LikeLegendVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeLegendVC.swift; sourceTree = "<group>"; };
 		866C2FDB21C40C2400E57817 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = SOURCE_ROOT; };
+		866C2FDD21C429A600E57817 /* CaptionsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionsVC.swift; sourceTree = "<group>"; };
 		867C76FF2148A9CE00AFCB0E /* FilterOptionsTVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterOptionsTVC.swift; sourceTree = "<group>"; };
 		868E0E5C214ADCFC0057D825 /* ResetPasswordVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetPasswordVC.swift; sourceTree = "<group>"; };
 		B8041C4B4A9DA4F0F53D2BDE /* Pods_QuickChat.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QuickChat.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -84,7 +84,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				861A47D42144627E002D316D /* CloudKit.framework in Frameworks */,
 				226EFFA11E1BBBCA00B1D185 /* MapKit.framework in Frameworks */,
 				62058F6006BD9ACBE0439C4B /* Pods_QuickChat.framework in Frameworks */,
 				861A47D621446285002D316D /* StoreKit.framework in Frameworks */,
@@ -172,7 +171,6 @@
 			isa = PBXGroup;
 			children = (
 				861A47D521446285002D316D /* StoreKit.framework */,
-				861A47D32144627E002D316D /* CloudKit.framework */,
 				226EFFA01E1BBBCA00B1D185 /* MapKit.framework */,
 				B8041C4B4A9DA4F0F53D2BDE /* Pods_QuickChat.framework */,
 			);
@@ -184,6 +182,7 @@
 			children = (
 				861A47C921444C2A002D316D /* StatusVC.swift */,
 				861A47D721446D4A002D316D /* MyPhotosVC.swift */,
+				866C2FDD21C429A600E57817 /* CaptionsVC.swift */,
 			);
 			path = MyStatus;
 			sourceTree = "<group>";
@@ -281,7 +280,7 @@
 								enabled = 1;
 							};
 							com.apple.iCloud = {
-								enabled = 1;
+								enabled = 0;
 							};
 						};
 					};
@@ -410,6 +409,7 @@
 				2217853D1DCD1DAC00A69F88 /* ConversationsVC.swift in Sources */,
 				22A92BB11D59EBD6005D76F7 /* AppDelegate.swift in Sources */,
 				868E0E5D214ADCFC0057D825 /* ResetPasswordVC.swift in Sources */,
+				866C2FDE21C429A600E57817 /* CaptionsVC.swift in Sources */,
 				224AFAA91D86890A004E7CCD /* WelcomeVC.swift in Sources */,
 				220698841E066E4900F2284B /* Helper Files.swift in Sources */,
 				861C6F372149285B00F258C5 /* LegendVC.swift in Sources */,

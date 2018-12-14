@@ -61,6 +61,14 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
             print("No internet connection")
             self.alert(message: "Please check your internet connection and try again.", title: "Internet connection is not available")
         }
+        else if !defaults.bool(forKey: "buy") {
+            let myAlert = UIAlertController(title: "Please become active", message: nil, preferredStyle: .alert)
+            let okAction = UIAlertAction(title: "OK", style: .cancel, handler: { _ in
+                self.tabBarController?.selectedIndex = 0
+            })
+            myAlert.addAction(okAction)
+            self.present(myAlert, animated: true)
+        }
         else {
             housekeeping()
             clusterManager.removeAll()
@@ -68,16 +76,8 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                 mapView.removeAnnotation(annotation)
             }
             
-            if defaults.bool(forKey: "buy") || defaults.bool(forKey: "receive") {
+            if defaults.bool(forKey: "buy") {
                 determineMyCurrentLocation()
-            }
-            else {
-                let myAlert = UIAlertController(title: "Please enter your status", message: nil, preferredStyle: .alert)
-                let okAction = UIAlertAction(title: "OK", style: .cancel, handler: { _ in
-                    self.tabBarController?.selectedIndex = 0
-                })
-                myAlert.addAction(okAction)
-                self.present(myAlert, animated: true)
             }
         }
         
@@ -98,7 +98,7 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
     }
     
     func filterChanged(newFilters: [Bool]) {
-        
+        refreshPressed(nil)
     }
     
     @IBAction func legendPressed(_ sender: UIBarButtonItem) {
@@ -245,10 +245,8 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                         
                         let personBuyDuration = Double(Date().timeIntervalSince1970) - Double(person["buy"]!)!
                         let personBuying = personBuyDuration < 60 * 60 * 4
-                        let personReceiveDuration = Double(Date().timeIntervalSince1970) - Double(person["receive"]!)!
-                        let personReceiving = personReceiveDuration < 60 * 60 * 4
                         
-                        if personBuying || personReceiving {
+                        if personBuying {
                             let annotation = PeopleAnnotation()
                             annotation.coordinate = thisLocation
                             annotation.firebaseID = snap.key
@@ -256,8 +254,10 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                             annotation.name = person["name"]
                             annotation.age = person["age"]
                             annotation.buy = personBuying
-                            annotation.receive = personReceiving
                             annotation.blurb = person["blurb"] ?? ""
+                            User.info(forUserID: annotation.firebaseID, completion: { user in
+                                annotation.profilePic = user.profilePic
+                            })
                             
                             if let me = snap.childSnapshot(forPath: Auth.auth().currentUser!.uid).value as? [String: Any] {
                                 if let superlike = me["superlike"] as? Bool {
@@ -268,14 +268,6 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                             if personBuying {
                                 annotation.style = .color(UIColor(red: 65/255, green: 181/255, blue: 86/255, alpha: 1), radius: 25)
                                 annotation.duration = personBuyDuration
-                            }
-                            if personReceiving {
-                                annotation.style = .color(UIColor(red: 250/255, green: 128/255, blue: 114/255, alpha: 1), radius: 25)
-                                annotation.duration = personReceiveDuration
-                            }
-                            if personBuying && personReceiving {
-                                annotation.style = .color(GlobalVariables.blue, radius: 25)
-                                annotation.duration = personBuyDuration < personReceiveDuration ? personBuyDuration : personReceiveDuration
                             }
                             
                             self.clusterManager.add(annotation)
@@ -294,14 +286,6 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                                 self.clusterManager.remove(annotation)
                                 group.leave()
                             }
-                            else if !filters[3] && annotation.receive {
-                                self.clusterManager.remove(annotation)
-                                group.leave()
-                            }
-                            else if !filters[4] && annotation.buy {
-                                self.clusterManager.remove(annotation)
-                                group.leave()
-                            }
                             else if Int(annotation.age.split(separator: " ").first!)! < defaults.integer(forKey: "minAge") { // min age filter
                                 self.clusterManager.remove(annotation)
                                 group.leave()
@@ -309,11 +293,11 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                             else if Int(annotation.age.split(separator: " ").first!)! > defaults.integer(forKey: "maxAge") { // max age filters
                                 self.clusterManager.remove(annotation)
                                 group.leave()
-                            } /*
+                            }
                             else if self.likedIDs.contains(annotation.firebaseID) { // remove already liked/disliked ppl
                                 self.clusterManager.remove(annotation)
                                 group.leave()
-                            } */
+                            }
                             else { // remove if blocked
                                 Database.database().reference().child("users").child(annotation.firebaseID).child("blockList").observe(.value, with: { snapshot in
                                     if snapshot.exists() {
@@ -438,21 +422,22 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
             }
             else {
                 let identifier = "Pin"
-                var view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKPinAnnotationView
+                var view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) //as MKPinAnnotationView
                 if let view = view {
                     view.annotation = annotation
                     view.canShowCallout = false
                 }
                 else {
-                    view = MKPinAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                    view = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier) //as MKPinAnnotationView
                 }
                 
-                if case let .color(color, _) = style {
-                    view?.pinTintColor = color
-                }
-                else {
-                    view?.pinTintColor = .green
-                }
+                view?.image = annotation.profilePic
+                view?.contentMode = .scaleAspectFill
+                view?.frame.size = CGSize(width: 28, height: 28)
+                view?.layer.cornerRadius = view!.frame.size.height/2
+                view?.layer.masksToBounds = true
+                view?.layer.borderColor = UIColor.white.cgColor
+                view?.layer.borderWidth = 2
                 
                 return view
             }

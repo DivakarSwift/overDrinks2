@@ -115,6 +115,17 @@ class ContactsCVCell: UICollectionViewCell {
     }
 }
 
+class LikeLegendCell: UITableViewCell {
+    @IBOutlet weak var picView: UIImageView!
+    @IBOutlet weak var descrip: UILabel!
+    
+    override func prepareForReuse() {
+        picView.image = nil
+        descrip.text = nil
+    }
+}
 
-
-
+class AgeFilterCell: UITableViewCell {
+    @IBOutlet weak var minAgeTF: UITextField!
+    @IBOutlet weak var maxAgeTF: UITextField!
+}

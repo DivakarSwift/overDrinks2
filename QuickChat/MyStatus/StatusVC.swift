@@ -22,9 +22,6 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
     
     var myPhotos = [ProfilePic]()
     
-    let receiveStatement = "Receive a drink"
-    let buyStatement = "Buy someone a drink"
-    
     var locationManager: CLLocationManager!
     lazy var geocoder = CLGeocoder()
     var userLocation: CLLocationCoordinate2D?
@@ -200,7 +197,6 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
             }
         }
         
-        reloadReceiveElapse()
         reloadBuyElapse()
         
         if let viewRow: ViewRow<UIImageView> = form.rowBy(tag: "profilePic") {
@@ -245,22 +241,11 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         }
     }
     
-    func reloadReceiveElapse() {
-        if let receiveElapse = form.rowBy(tag: "receiveElapse") {
-            if defaults.bool(forKey: "receive") {
-                if let receiveCreated = defaults.object(forKey: "receiveCreated") as? Date {
-                    receiveElapse.title = "Wanted a drink for \(Date().offset(from: receiveCreated))"
-                    receiveElapse.reload(with: .top)
-                }
-            }
-        }
-    }
-    
     func reloadBuyElapse() {
         if let buyElapse = form.rowBy(tag: "buyElapse") {
             if defaults.bool(forKey: "buy") {
                 if let buyCreated = defaults.object(forKey: "buyCreated") as? Date {
-                    buyElapse.title = "Wanted a drink for \(Date().offset(from: buyCreated))"
+                    buyElapse.title = "Active for \(Date().offset(from: buyCreated))"
                     buyElapse.reload(with: .top)
                 }
             }
@@ -283,12 +268,12 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         } */
             
         // WHAT I WANT
-        +++ Section(header: "I would like to...", footer: "Note: Desires only remain active for 4 hours. The longer your desire is active, the more likely you are you to be seen. Tap refresh to reset the timer.") { section in
+        +++ Section(footer: "Note: You can stay active for up to 4 hours. The longer you are active, the more likely you are to be seen. Tap refresh to reset the timer.") { section in
             section.tag = "section1"
             section.hidden = Condition.function(["name", "birthday", "manage", "profilePic", "sex"], { form in
                 if let _ = (form.rowBy(tag: "name") as? TextRow)?.value {
                     if !self.underage {
-                        if self.myPhotos.flatMap({$0.hasPhoto}).contains(true) {
+                        if self.myPhotos.compactMap({$0.hasPhoto}).contains(true) {
                             if let segRow: SegmentedRow<String> = form.rowBy(tag: "sex") {
                                 if let _ = segRow.value {
                                     self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
@@ -303,51 +288,16 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
             })
         }
             
-            <<< SwitchRow("receive") { row in
-                row.value = defaults.bool(forKey: "receive") ? true : false
-                if row.value! {
-                    row.title = "ACTIVE: " + receiveStatement
-                }
-                else {
-                    row.title = "INACTIVE: " + receiveStatement
-                }
-                }.onChange { row in
-                    row.title = row.value! ? "ACTIVE: " + self.receiveStatement : "INACTIVE: " + self.receiveStatement
-                    if row.value! {
-                        defaults.set(true, forKey: "receive")
-                        defaults.set(Date(), forKey: "receiveCreated")
-                    }
-                    else {
-                        defaults.set(false, forKey: "receive")
-                    }
-                    self.uploadCoordinates()
-                    self.reloadReceiveElapse()
-                    row.updateCell()
-                }.cellUpdate { cell, row in
-                    cell.textLabel?.font = defaults.bool(forKey: "receive") ? self.boldFont : self.defaultFont
-            }
-            
-            <<< LabelRow("receiveElapse"){
-                $0.hidden = Condition.function(["receive"], { form in
-                    return !((form.rowBy(tag: "receive") as? SwitchRow)?.value ?? false)
-                })
-                if defaults.bool(forKey: "receive") {
-                    if let receiveCreated = defaults.object(forKey: "receiveCreated") as? Date {
-                        $0.title = "Wanted a drink for \(Date().offset(from: receiveCreated))"
-                    }
-                }
-            }
-            
             <<< SwitchRow("buy") { row in
                 row.value = defaults.bool(forKey: "buy") ? true : false
                 if row.value! {
-                    row.title = "ACTIVE: " + buyStatement
+                    row.title = "ACTIVE: Find people nearby"
                 }
                 else {
-                    row.title = "INACTIVE: " + buyStatement
+                    row.title = "INACTIVE: You cannot be seen"
                 }
                 }.onChange { row in
-                    row.title = row.value! ? "ACTIVE: " + self.buyStatement : "INACTIVE: " + self.buyStatement
+                    row.title = row.value! ? "ACTIVE: Find people nearby" : "INACTIVE: You cannot be seen"
                     if row.value! {
                         defaults.set(true, forKey: "buy")
                         defaults.set(Date(), forKey: "buyCreated")
@@ -368,7 +318,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                 })
                 if defaults.bool(forKey: "buy") {
                     if let buyCreated = defaults.object(forKey: "buyCreated") as? Date {
-                        $0.title = "Wanted a drink for \(Date().offset(from: buyCreated))"
+                        $0.title = "Active for \(Date().offset(from: buyCreated))"
                     }
                 }
             }
@@ -376,11 +326,6 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
             <<< ButtonRow("refresh") {
                 $0.title = "Refresh"
                 $0.onCellSelection( { (cell, row) in
-                    if defaults.bool(forKey: "receive") {
-                        defaults.set(Date(), forKey: "receiveCreated")
-                        self.reloadReceiveElapse()
-                    }
-                    
                     if defaults.bool(forKey: "buy") {
                         defaults.set(Date(), forKey: "buyCreated")
                         self.reloadBuyElapse()
@@ -656,28 +601,34 @@ extension StatusVC {
     func changeEurekaText() {
         SwitchRow.defaultCellSetup =  { cell, row in
             cell.textLabel?.font = self.defaultFont
+            cell.separatorInset = .zero
         }
         
         LabelRow.defaultCellSetup =  { cell, row in
             cell.textLabel?.font = self.defaultFont
+            cell.separatorInset = .zero
         }
         
         ButtonRow.defaultCellSetup =  { cell, row in
             cell.textLabel?.font = self.defaultFont
+            cell.separatorInset = .zero
         }
         
         SegmentedRow<String>.defaultCellSetup =  { cell, row in
             cell.textLabel?.font = self.defaultFont
+            cell.separatorInset = .zero
         }
         
         DateRow.defaultCellSetup =  { cell, row in
             cell.textLabel?.font = self.defaultFont
             cell.detailTextLabel?.font = self.defaultFont
+            cell.separatorInset = .zero
         }
         
         TextRow.defaultCellSetup =  { cell, row in
             cell.textLabel?.font = self.defaultFont
             cell.detailTextLabel?.font = self.defaultFont
+            cell.separatorInset = .zero
         }
         
         TextAreaRow.defaultCellSetup =  { cell, row in
@@ -685,6 +636,7 @@ extension StatusVC {
             cell.textView.font = UIFont(name: "AvenirNext-Italic", size: 16)!
             cell.placeholderLabel?.textAlignment = .center
             cell.placeholderLabel?.font = UIFont(name: "AvenirNext-Italic", size: 16)!
+            cell.separatorInset = .zero
         }
     }
     
@@ -729,7 +681,7 @@ extension StatusVC {
         if let _ = defaults.array(forKey: "filters") as? [Bool] {
         }
         else {
-            var filters = [Bool](repeating: true, count: 5)
+            var filters = [Bool](repeating: true, count: 3)
             defaults.set(filters, forKey: "filters")
         }
         
