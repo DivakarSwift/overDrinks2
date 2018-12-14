@@ -269,7 +269,7 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                                         if let blocked = data[Auth.auth().currentUser!.uid] {
                                             if blocked {
                                                 self.clusterManager.remove(annotation)
-                                            }
+                                                }
                                         }
                                         group.leave()
                                     }
@@ -504,13 +504,6 @@ extension SearchVC {
     
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle {
         return .none
-    }
-    
-    func prepareForPopoverPresentation(_ popoverPresentationController: UIPopoverPresentationController) {
-    }
-    
-    func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
-        
     }
     
     func popoverPresentationControllerShouldDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) -> Bool {

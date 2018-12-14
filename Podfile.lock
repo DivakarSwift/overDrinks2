@@ -1,7 +1,11 @@
 PODS:
   - Alamofire (4.7.3)
+  - AWSCore (2.6.32)
+  - AWSS3 (2.6.32):
+    - AWSCore (= 2.6.32)
   - Cluster (2.2.9)
   - Disk (0.4.0)
+  - DynamicBlurView (2.0.2)
   - Eureka (4.1.1)
   - Firebase/Auth (5.8.1):
     - Firebase/CoreOnly
@@ -53,13 +57,19 @@ PODS:
     - NVActivityIndicatorView/Presenter (= 4.4.0)
   - NVActivityIndicatorView/Presenter (4.4.0)
   - Parchment (1.4.1)
+  - PopupDialog (0.7.1):
+    - DynamicBlurView (~> 2.0)
   - Protobuf (3.6.1)
   - ReachabilitySwift (4.2.1)
+  - SwiftMessages (5.0.1):
+    - SwiftMessages/App (= 5.0.1)
+  - SwiftMessages/App (5.0.1)
   - ViewRow (0.3.0):
     - Eureka (>= 4.0.0)
 
 DEPENDENCIES:
   - Alamofire
+  - AWSS3
   - Cluster
   - Disk
   - Eureka (~> 4.1.0)
@@ -70,14 +80,19 @@ DEPENDENCIES:
   - GeoFire
   - NVActivityIndicatorView
   - Parchment
+  - PopupDialog (~> 0.7.1)
   - ReachabilitySwift
+  - SwiftMessages (~> 5.0.1)
   - ViewRow (from `https://github.com/EurekaCommunity/ViewRow`)
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
     - Alamofire
+    - AWSCore
+    - AWSS3
     - Cluster
     - Disk
+    - DynamicBlurView
     - Eureka
     - Firebase
     - FirebaseAuth
@@ -93,8 +108,10 @@ SPEC REPOS:
     - leveldb-library
     - NVActivityIndicatorView
     - Parchment
+    - PopupDialog
     - Protobuf
     - ReachabilitySwift
+    - SwiftMessages
 
 EXTERNAL SOURCES:
   ViewRow:
@@ -107,8 +124,11 @@ CHECKOUT OPTIONS:
 
 SPEC CHECKSUMS:
   Alamofire: c7287b6e5d7da964a70935e5db17046b7fde6568
+  AWSCore: bfb49938a3a4eb190bc68edf1fa9e90969de8fa2
+  AWSS3: 5c2c57693f78ef3930bc6e267a1702182f3ceaa1
   Cluster: 20155f2635cc603ac9164680c3a7d1fdf83ff187
   Disk: ef2956657d5bb56034b38b29b352170165226440
+  DynamicBlurView: aa6db4defc6e537eb86fc5e58dd3991666178399
   Eureka: b88fb930e42c79f8c03c373d0fcdc28c1d6c50ed
   Firebase: a870ed114d769b424021a0c8ddb0c86c3250a0c5
   FirebaseAuth: 504b198ceb3472dca5c65bb95544ea44cfc9439e
@@ -124,10 +144,12 @@ SPEC CHECKSUMS:
   leveldb-library: 08cba283675b7ed2d99629a4bc5fd052cd2bb6a5
   NVActivityIndicatorView: ec7440a57af2450319d3a4181cca7da6fc127064
   Parchment: e6c2a3a0063739382dd207e21d48fe5e81f3324a
+  PopupDialog: 39598b7d41719f5c025b4b70e62728bae7734fef
   Protobuf: 1eb9700044745f00181c136ef21b8ff3ad5a0fd5
   ReachabilitySwift: 35720ffea59c1c76d15f885be77fd33e33985427
+  SwiftMessages: 32ce3cfc8388b41aae56ff4853cc752a20101147
   ViewRow: e278428ff53da5eab18b191d3e19a16f3e299fc1
 
-PODFILE CHECKSUM: 37b1bb9dad713aec3720dfc81adde148c001f719
+PODFILE CHECKSUM: bff42a04a285789cdf5bf7cbf6add110908ac02a
 
 COCOAPODS: 1.6.0.beta.1

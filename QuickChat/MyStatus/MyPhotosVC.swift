@@ -12,6 +12,7 @@ import Disk
 import Photos
 import CloudKit
 import Firebase
+import AWSS3
 
 protocol MyPhotosVCDelegate: class {
     func changedPhotos(newPhotos: [UIImage], newChangedPhoto: [Bool])
@@ -22,9 +23,10 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var doneOutlet: UIBarButtonItem!
     
-    var myPhotos: [UIImage]!
-    var changedPhoto: [Bool]! // track the photos that change b/c can't upload duplicates onto cloudkit
+    var myPhotos: [ProfilePic]!
     var selectedIndexPath: IndexPath!
+    
+    var rearrangedPhotos = false
     
     var delegate: MyPhotosVCDelegate?
     
@@ -49,14 +51,31 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
         super.viewWillDisappear(animated)
         
         updateFirebaseProfilePic()
+        if rearrangedPhotos {
+            for (i, pic) in myPhotos.enumerated() {
+                if pic.hasPhoto {
+                    let documentDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
+                    let localPath = (documentDirectory as NSString).appendingPathComponent("image\(i)")
+                    do {
+                        try pic.imageData!.write(to: URL(fileURLWithPath: localPath), options: .atomic)
+                    }
+                    catch { print(error) }
+                    let imageURL = URL(fileURLWithPath: localPath)
+                    self.uploadToS3(imageURL: imageURL, index: i)
+                }
+                else {
+                    deleteFromS3(tag: i)
+                }
+            }
+        }
     }
     
     func updateFirebaseProfilePic() {
         let userID = Auth.auth().currentUser!.uid
         
-        for (index, boolValue) in changedPhoto.enumerated() {
-            if boolValue {
-                let image = self.myPhotos[index]
+        for (index, pic) in myPhotos.enumerated() {
+            if pic.hasPhoto {
+                let image = UIImage(data: self.myPhotos[index].imageData!)!
                 
                 let imageData = UIImageJPEGRepresentation(image, 0.2)
                 
@@ -81,41 +100,69 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
         }
     }
     
-    func saveToCloud() {
-        UIApplication.shared.isNetworkActivityIndicatorVisible = true
-        let predicate = NSPredicate(format: "firebaseID == %@", Auth.auth().currentUser!.uid)
-        let query = CKQuery(recordType: "CloudProfilePictures", predicate: predicate)
+    func uploadToS3(imageURL: URL, index: Int) {
+        // Configure AWS Cognito Credentials
+        let credentialsProvider = AWSCognitoCredentialsProvider(regionType:.USEast1, identityPoolId:"us-east-1:b00b05b6-8a73-44ed-be9f-5a727fa9160e")
+        let configuration = AWSServiceConfiguration(region:.USEast1, credentialsProvider:credentialsProvider)
+        AWSServiceManager.default().defaultServiceConfiguration = configuration
         
-        database.perform(query, inZoneWith: nil) { (records, error) in
-            guard let records = records else { return }
-            
-            var picAssets: [CKAsset] = []
-            if let _ = self.changedPhoto {
-                for (index,thisBool) in self.changedPhoto.enumerated() {
-                    if thisBool {
-                        picAssets.append(self.convertImageToCKAsset(image: self.myPhotos[index]))
-                    }
-                }
-                
-                if records.count > 0 {
-                    let cloudProfilePics = records[0]
-                    cloudProfilePics.setValue(picAssets, forKey: "pictureAssets")
-                    //cloudProfilePics.setValue(self.convertToInt(self.changedPhoto), forKey: "changedPhoto")
-                    self.saveRecord(record: records[0])
-                }
-                else {
-                    let cloudProfilePics = CKRecord(recordType: "CloudProfilePictures")
-                    cloudProfilePics.setValue(defaults.string(forKey: "name"), forKey: "name")
-                    cloudProfilePics.setValue(defaults.string(forKey: "age"), forKey: "age")
-                    cloudProfilePics.setValue(Auth.auth().currentUser?.uid, forKey: "firebaseID")
-                    cloudProfilePics.setValue(picAssets, forKey: "pictureAssets")
-                    //cloudProfilePics.setValue(self.convertToInt(self.changedPhoto), forKey: "changedPhoto")
-                    self.saveRecord(record: cloudProfilePics)
+        // Set up AWS Transfer Manager Request
+        let S3BucketName = "overdrinks"
+        let uploadRequest = AWSS3TransferManagerUploadRequest()
+        uploadRequest?.body = imageURL
+        uploadRequest?.key = Auth.auth().currentUser!.uid + "-\(index)"
+        uploadRequest?.bucket = S3BucketName
+        uploadRequest?.contentType = "image/jpeg"
+        uploadRequest?.uploadProgress = { (bytesSent, totalBytesSent, totalBytesExpectedtoSend) -> Void in
+            let progressRatio = Float(totalBytesSent) / Float(totalBytesExpectedtoSend)
+            DispatchQueue.main.async {
+                if progressRatio >= 1 {
+                    
                 }
             }
         }
+        
+        let transferManager = AWSS3TransferManager.default()
+        
+        // Perform file upload
+        transferManager.upload(uploadRequest!).continueWith(block: { (task: AWSTask) -> Any? in
+            
+            if let error = task.error {
+                print("Upload failed with error: (\(error.localizedDescription))")
+            }
+            
+            if task.result != nil {
+                let s3URL = URL(string: "https://s3.amazonaws.com/\(S3BucketName)/\(uploadRequest!.key!)")!
+                print("Uploaded to:\n\(s3URL)")
+                
+                
+            }
+            else {
+                print("Unexpected empty result.")
+            }
+            return nil
+        })
     }
     
+    func deleteFromS3(tag: Int) {
+        // Configure AWS Cognito Credentials
+        let credentialsProvider = AWSCognitoCredentialsProvider(regionType:.USEast1, identityPoolId:"us-east-1:b00b05b6-8a73-44ed-be9f-5a727fa9160e")
+        let configuration = AWSServiceConfiguration(region:.USEast1, credentialsProvider:credentialsProvider)
+        AWSServiceManager.default().defaultServiceConfiguration = configuration
+        
+        let s3Service = AWSS3.default()
+        let deleteObjectRequest = AWSS3DeleteObjectRequest()
+        deleteObjectRequest?.bucket = "overdrinks" // bucket name
+        deleteObjectRequest?.key = Auth.auth().currentUser!.uid + "-\(tag)" // File name
+        s3Service.deleteObject(deleteObjectRequest!).continueWith { (task:AWSTask) -> AnyObject? in
+            if let error = task.error {
+                print("Error occurred: \(error)")
+                return nil
+            }
+            print("Bucket deleted successfully.")
+            return nil
+        }
+    }
   
     func checkPermission() {
         let photoAuthorizationStatus = PHPhotoLibrary.authorizationStatus()
@@ -176,18 +223,13 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
         let myAlert = UIAlertController(title: "Options", message: nil, preferredStyle: .actionSheet)
         let deleteAction = UIAlertAction(title: "Delete", style: .default) { (ACTION) in
             let defaultPic = UIImage(named: "profile pic")!
-            self.myPhotos[sender.view.tag] = defaultPic
-            self.changedPhoto[sender.view.tag] = false
-            try? Disk.remove("myPhotos", from: .documents)
-            try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos")
-            defaults.set(self.changedPhoto, forKey: "changedPhoto")
-            self.delegate?.changedPhotos(newPhotos: self.myPhotos, newChangedPhoto: self.changedPhoto)
-            self.saveToCloud()
+            self.myPhotos[sender.view.tag].imageData = defaultPic.getData(quality: 1)
+            try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos.json")
+            self.deleteFromS3(tag: sender.view.tag)
             self.collectionView.reloadData()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (ACTION) in
-            
-        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         
         myAlert.addAction(deleteAction)
         myAlert.addAction(cancelAction)
@@ -201,17 +243,16 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell1", for: indexPath) as! ProfileCell
         cell.backgroundColor = UIColor.clear
         
-        let image = myPhotos[indexPath.row]
+        let image = myPhotos[indexPath.row].imageData?.getImage()
         cell.profilePic.image = image
         cell.profilePic.layer.cornerRadius = cell.profilePic.frame.height/2
         cell.profilePic.layer.borderWidth = 3
         cell.profilePic.layer.borderColor = GlobalVariables.purple.cgColor
         
-        cell.deleteIcon.isHidden = self.changedPhoto[indexPath.row] ? false : true
+        cell.deleteIcon.isHidden = myPhotos[indexPath.row].hasPhoto ? false : true
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.deletePic))
         cell.deleteIcon.tag = indexPath.row
@@ -247,18 +288,19 @@ class MyPhotosVC: UIViewController, UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        let image = myPhotos[sourceIndexPath.row]
+        let profilePic = myPhotos[sourceIndexPath.row]
         myPhotos.remove(at: sourceIndexPath.row)
-        myPhotos.insert(image, at: destinationIndexPath.row)
+        myPhotos.insert(profilePic, at: destinationIndexPath.row)
         
-        let thisBool = changedPhoto[sourceIndexPath.row]
-        changedPhoto.remove(at: sourceIndexPath.row)
-        changedPhoto.insert(thisBool, at: destinationIndexPath.row)
+        rearrangedPhotos = true
         
-        try? Disk.remove("myPhotos", from: .documents)
-        try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos")
+        DispatchQueue.global(qos: .userInitiated).async {
+            try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos.json")
+            DispatchQueue.main.async {
+                self.collectionView.perform(#selector(self.collectionView.reloadData), with: nil, afterDelay: 0.05)
+            }
+        }
     }
-    // MARK: end collectionview setup
 
 }
 
@@ -269,6 +311,7 @@ extension MyPhotosVC {
             imagePicker.delegate = self
             imagePicker.sourceType = .photoLibrary
             imagePicker.allowsEditing = false
+            imagePicker.navigationBar.tintColor = .white
             self.present(imagePicker, animated: true, completion: nil)
         }
     }
@@ -285,16 +328,27 @@ extension MyPhotosVC {
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         if let pickedImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
-            self.myPhotos[self.selectedIndexPath.row] = pickedImage.fixOrientation()
-            self.changedPhoto[self.selectedIndexPath.row] = true
+            self.myPhotos[self.selectedIndexPath.row].imageData = pickedImage.getData(quality: 0.1)
+            self.myPhotos[self.selectedIndexPath.row].hasPhoto = true
             self.collectionView.reloadData()
-            self.saveToCloud()
+            
+            //details of image
+            let uploadFileURL = info[UIImagePickerControllerReferenceURL] as! NSURL
+            let imageName = uploadFileURL.lastPathComponent
+            let documentDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
+            // getting local path
+            let localPath = (documentDirectory as NSString).appendingPathComponent(imageName!)
+            //get actual image
+            let data = UIImageJPEGRepresentation(pickedImage, 0.1)
+            do {
+                try data!.write(to: URL(fileURLWithPath: localPath), options: .atomic)
+            }
+            catch { print(error) }
+            let imageURL = URL(fileURLWithPath: localPath)
+            self.uploadToS3(imageURL: imageURL, index: selectedIndexPath.row)
+            
             self.dismiss(animated: true, completion: {
-                try? Disk.remove("myPhotos", from: .documents)
-                try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos")
-                defaults.set(self.changedPhoto, forKey: "changedPhoto")
-                print(self.changedPhoto)
-                self.delegate?.changedPhotos(newPhotos: self.myPhotos, newChangedPhoto: self.changedPhoto)
+                try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos.json")
             })
         }
     }

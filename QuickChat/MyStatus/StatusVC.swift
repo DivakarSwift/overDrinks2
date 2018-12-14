@@ -20,8 +20,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
     
     var underage: Bool = true
     
-    var myPhotos: [UIImage]!
-    var changedPhoto: [Bool]!
+    var myPhotos = [ProfilePic]()
     
     let receiveStatement = "Receive a drink"
     let buyStatement = "Buy someone a drink"
@@ -38,27 +37,25 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         
         changeEurekaText()
         
-        if Disk.exists("myPhotos", in: .documents) {
-            myPhotos = try? Disk.retrieve("myPhotos", from: .documents, as: [UIImage].self)
+        if Disk.exists("myPhotos.json", in: .documents) {
+            myPhotos = try! Disk.retrieve("myPhotos.json", from: .documents, as: [ProfilePic].self)
         }
         else {
-            myPhotos = [UIImage](repeating: UIImage(named: "profile pic")!, count: 6)
-            try? Disk.save(myPhotos, to: .documents, as: "myPhotos")
-        }
-        
-        if let arrayBool = defaults.array(forKey: "changedPhoto") as? [Bool] {
-            changedPhoto = arrayBool
-        }
-        else {
-            changedPhoto = [Bool](repeating: false, count: 6)
-            defaults.setValue(changedPhoto, forKey: "changedPhoto")
+            for i in 0...5 {
+                let profilePic = ProfilePic()
+                profilePic.hasPhoto = false
+                profilePic.s3Key = Auth.auth().currentUser!.uid + "-\(i)"
+                profilePic.imageData = UIImageJPEGRepresentation(UIImage(named: "profile pic")!, 1.0)
+                myPhotos.append(profilePic)
+            }
+            try? Disk.save(myPhotos, to: .documents, as: "myPhotos.json")
         }
         
         if !defaults.bool(forKey: "secondTime") { // if first time, check cloud, otherwise use saved info
             defaults.set(false, forKey: "receive")
             defaults.set(false, forKey: "buy")
             
-            checkCloudData()
+            checkS3()
             defaults.set(true, forKey: "secondTime")
         }
         
@@ -81,6 +78,8 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         
         UIApplication.shared.isNetworkActivityIndicatorVisible = true
         
+        myPhotos = try! Disk.retrieve("myPhotos.json", from: .documents, as: [ProfilePic].self)
+        
         if reachability.connection == .none {
             print("No internet connection")
             self.alert(message: "Please check your internet connection and try again.", title: "Internet connection is not available")
@@ -91,47 +90,17 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         }
     }
     
-    func checkCloudData() {
+    func checkS3() {
         UIApplication.shared.isNetworkActivityIndicatorVisible = true
         self.tabBarController?.tabBar.isHidden = true
         
         NVActivityIndicatorView.DEFAULT_COLOR = .white
         NVActivityIndicatorView.DEFAULT_TEXT_COLOR = .white
         NVActivityIndicatorView.DEFAULT_BLOCKER_MESSAGE = "Setting up profile"
+        
         self.startAnimating()
-        let predicate = NSPredicate(format: "firebaseID == %@", Auth.auth().currentUser!.uid)
-        let query = CKQuery(recordType: "CloudProfilePictures", predicate: predicate)
-        let operation = CKQueryOperation(query: query)
-        operation.qualityOfService = .userInitiated
-
-        operation.queryCompletionBlock = { cursor, error in
-            DispatchQueue.main.async {
-                self.updateForm()
-                self.stopAnimating()
-                self.tabBarController?.tabBar.isHidden = false
-                
-                
-            }
-        }
+        self.stopAnimating()
         
-        operation.recordFetchedBlock = { record in
-            self.changedPhoto = [Bool](repeating: false, count: 6)
-            if let picAssets = record.value(forKey: "pictureAssets") as? [CKAsset] {
-                for (index,asset) in picAssets.enumerated() {
-                    self.myPhotos[index] = asset.image()!
-                    self.changedPhoto[index] = true
-                    if index == 0 {
-                        self.updateFirebaseProfilePic(picture: self.myPhotos[0])
-                    }
-                }
-                
-                try? Disk.remove("myPhotos", from: .documents)
-                try? Disk.save(self.myPhotos, to: .documents, as: "myPhotos")
-                defaults.setValue(self.changedPhoto, forKey: "changedPhoto")
-            }
-        }
-        
-        database.add(operation)
     }
     
     func updateFirebaseProfilePic(picture: UIImage) {
@@ -156,12 +125,10 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
     }
  
     func changedPhotos(newPhotos: [UIImage], newChangedPhoto newChangedPhotos: [Bool]) {
-        myPhotos = newPhotos
-        changedPhoto = newChangedPhotos
         if let viewRow:ViewRow<UIImageView> = form.rowBy(tag: "profilePic") {
-            for (index, boolValue) in changedPhoto.enumerated() {
-                if boolValue {
-                    let image = self.myPhotos[index]
+            for (index, pic) in myPhotos.enumerated() {
+                if pic.hasPhoto {
+                    let image = UIImage(data: self.myPhotos[index].imageData!)!
                     viewRow.view?.image = image
                     viewRow.reload()
                     break
@@ -236,14 +203,12 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
         reloadBuyElapse()
         
         if let viewRow: ViewRow<UIImageView> = form.rowBy(tag: "profilePic") {
-            if let _ = changedPhoto {
-                for (index, boolValue) in changedPhoto.enumerated() {
-                    if boolValue {
-                        let image = self.myPhotos[index]
-                        viewRow.view?.image = image
-                        viewRow.reload()
-                        break
-                    }
+            for (index, pic) in myPhotos.enumerated() {
+                if pic.hasPhoto {
+                    let image = UIImage(data: self.myPhotos[index].imageData!)!
+                    viewRow.view?.image = image
+                    viewRow.reload()
+                    break
                 }
             }
         }
@@ -309,7 +274,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
             section.hidden = Condition.function(["name", "birthday", "manage", "profilePic", "sex"], { form in
                 if let _ = (form.rowBy(tag: "name") as? TextRow)?.value {
                     if !self.underage {
-                        if self.changedPhoto.contains(true) {
+                        if self.myPhotos.flatMap({ $0.hasPhoto} ).contains(true) {
                             if let segRow: SegmentedRow<String> = form.rowBy(tag: "sex") {
                                 if let _ = segRow.value {
                                     self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
@@ -568,10 +533,9 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                     
                     //  Get something to display
                     var image = UIImage(named: "profile pic")!
-                    for (index, boolValue) in self.changedPhoto.enumerated() {
-                        if boolValue {
-                            let profilePic = self.myPhotos[index]
-                            image = profilePic
+                    for (index, pic) in self.myPhotos.enumerated() {
+                        if pic.hasPhoto {
+                            image = UIImage(data: self.myPhotos[index].imageData!)!
                             break
                         }
                     }
@@ -579,7 +543,7 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
                     cell.view!.image = image
                     cell.view!.contentMode = .scaleAspectFit
                     
-                    cell.view!.layer.cornerRadius = 300
+                    //cell.view!.layer.cornerRadius = 300
                     cell.view!.layer.masksToBounds = true
                     //cell.view!.layer.borderWidth = 1.5
                     cell.view!.clipsToBounds = true
@@ -604,7 +568,6 @@ class StatusVC: FormViewController, MyPhotosVCDelegate, CLLocationManagerDelegat
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let destination = segue.destination as? MyPhotosVC {
             destination.myPhotos = myPhotos
-            destination.changedPhoto = changedPhoto
             destination.delegate = self
         }
         

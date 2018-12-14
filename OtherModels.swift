@@ -11,7 +11,7 @@ import UIKit
 import CloudKit
 import MapKit
 import Cluster
-
+import Disk
 
 class CloudProfilePictures {
     var name: String?
@@ -19,6 +19,12 @@ class CloudProfilePictures {
     var firebaseID: String?
     var pictureAssets: [CKAsset] = []
     var changedPhoto: [Bool] = []
+}
+
+class ProfilePic: Codable {
+    var hasPhoto: Bool!
+    var s3Key: String!
+    var imageData: Data?
 }
 
 class MyPointAnnotation: MKPointAnnotation {

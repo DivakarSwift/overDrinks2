@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "89BD384C7046F5F2E1CD048982E32768"
+               BlueprintIdentifier = "F686EFA0CCD36672384DF340C9AB5069"
                BlueprintName = "ViewRow"
                ReferencedContainer = "container:Pods.xcodeproj"
                BuildableName = "ViewRow.framework">

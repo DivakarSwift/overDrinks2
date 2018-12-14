@@ -25,6 +25,9 @@ import Foundation
 import UIKit
 import CloudKit
 import Reachability
+import Firebase
+import PopupDialog
+import SwiftMessages
 
 let defaults = UserDefaults.standard
 let database = CKContainer(identifier: "iCloud.com.TianProductions.overDrinks").publicCloudDatabase
@@ -41,6 +44,16 @@ extension UIViewController {
     func setupNav() {
         let navigationTitleFont = UIFont(name: "AvenirNext-Regular", size: 18)!
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedStringKey.font: navigationTitleFont, NSAttributedStringKey.foregroundColor: UIColor.white]
+    }
+    
+    func shake(object: AnyObject!) {
+        let animation = CABasicAnimation(keyPath: "position")
+        animation.duration = 0.07
+        animation.repeatCount = 4
+        animation.autoreverses = true
+        animation.fromValue = NSValue(cgPoint: CGPoint(x: (object?.center.x)! - 10, y: object.center.y))
+        animation.toValue = NSValue(cgPoint: CGPoint(x: object.center.x + 10, y: object.center.y))
+        object.layer.add(animation, forKey: "position")
     }
     
     func compareImage(image: UIImage, image2: UIImage) -> Bool {
@@ -79,6 +92,9 @@ extension UIViewController {
         
         saveOperation.perRecordProgressBlock = {(_, progress) -> Void in
             print("\(Float(progress))")
+            DispatchQueue.main.async {
+                UIApplication.shared.isNetworkActivityIndicatorVisible = true
+            }
         }
         
         saveOperation.perRecordCompletionBlock = {(record, error) -> Void in
@@ -86,7 +102,15 @@ extension UIViewController {
             print(error)
             DispatchQueue.main.async{
                 UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                SwiftMessages.show {
+                    let view = MessageView.viewFromNib(layout: .statusLine)
+                    view.configureTheme(.success)
+                    view.configureDropShadow()
+                    view.configureContent(title: "Update saved!", body: "Update saved!")
+                    return view
+                }
             }
+            
         }
         
         database.add(saveOperation)
@@ -105,10 +129,147 @@ extension UIViewController {
         }
         return intArray
     }
+    
+    func dislikeUser(recipID: String, completion: @escaping () -> Void) {
+        let value = ["dislike": true, "timeStamp": Date().timeIntervalSince1970] as [String : Any]
+        
+        Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child(recipID).updateChildValues(value, withCompletionBlock: { (errr, _) in
+            print("added disliked user")
+            completion()
+        })
+    }
+    
+    func likeUser(recipID: String, completion: @escaping (Bool) -> Void) {
+        let value = ["like": true, "timeStamp": Date().timeIntervalSince1970] as [String : Any]
+        // add the liked recipient to user's list
+        Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child(recipID).updateChildValues(value, withCompletionBlock: { (errr, _) in
+            print("added liked user")
+            // see if recipient has already liked
+            Database.database().reference().child("users").child(recipID).child(Auth.auth().currentUser!.uid).observeSingleEvent(of: .value, with: { snapshot in
+                if snapshot.exists() {
+                    let data = snapshot.value as! [String : Any]
+                    if let like = data["like"] as? Bool {
+                        if like {
+                            completion(true)
+                        }
+                    }
+                    else if let superlike = data["superlike"] as? Bool {
+                        if superlike {
+                            completion(true)
+                        }
+                    }
+                    else {
+                        completion(false)
+                    }
+                }
+                else {
+                    completion(false)
+                }
+            })
+        })
+    }
+    
+    func superlikeUser(recipID: String, completion: @escaping (Bool) -> Void) {
+        let value = ["superlike": true, "timeStamp": Date().timeIntervalSince1970] as [String : Any]
+        Database.database().reference().child("users").child(Auth.auth().currentUser!.uid).child(recipID).updateChildValues(value, withCompletionBlock: { (errr, _) in
+            print("added superliked user")
+            // see if recipient has already liked
+            Database.database().reference().child("users").child(recipID).child(Auth.auth().currentUser!.uid).observeSingleEvent(of: .value, with: { snapshot in
+                if snapshot.exists() {
+                    let data = snapshot.value as! [String : Any]
+                    if let like = data["like"] as? Bool {
+                        if like {
+                            completion(true)
+                        }
+                    }
+                    else if let superlike = data["superlike"] as? Bool {
+                        if superlike {
+                            completion(true)
+                        }
+                    }
+                    else {
+                        completion(false)
+                    }
+                }
+                else {
+                    completion(false)
+                }
+            })
+        })
+    }
+    
+    func createConvo(currentUserID: String!, toID: String!) {
+        let values = ["type": "text", "content": " ", "fromID": currentUserID, "toID": toID, "timestamp": Int(Date().timeIntervalSince1970), "isRead": false] as [String : Any]
+        Database.database().reference().child("conversations").childByAutoId().childByAutoId().setValue(values, withCompletionBlock: { (error, reference) in
+            let data = ["location": reference.parent!.key]
+            Database.database().reference().child("users").child(currentUserID).child("conversations").child(toID).updateChildValues(data)
+            Database.database().reference().child("users").child(toID).child("conversations").child(currentUserID).updateChildValues(data)
+        })
+    }
+    
+    func ranOutOfLikes() {
+        let title = "You've run out of likes!"
+        let message = "Upgrade your status or wait until 11 AM to refill your likes. (For purposes of beta testing, let's refill your likes)"
+        
+        let popup = PopupDialog(title: title, message: message, image: UIImage(named: "likeButton")!)
+        
+        // Create buttons
+        let getMoreButton = DefaultButton(title: "UPGRADE STATUS") {
+            defaults.set(50, forKey: "likes")
+        }
+        
+        let okButton = DefaultButton(title: "OK") {
+            defaults.set(50, forKey: "likes")
+            print("Ah, maybe next time :)")
+        }
+        
+        popup.addButtons([getMoreButton, okButton])
+        self.present(popup, animated: true, completion: nil)
+    }
+    
+    func ranOutOfSuperlikes() {
+        let title = "You've run out of toasts!"
+        let message = "Upgrade your status or wait until 11 AM to refill your toasts. (For purposes of beta testing, have another toast)"
+        
+        let popup = PopupDialog(title: title, message: message, image: UIImage(named: "superLike")!)
+        
+        // Create buttons
+        let getMoreButton = DefaultButton(title: "UPGRADE STATUS") {
+            defaults.set(1, forKey: "superlikes")
+        }
+        
+        let okButton = DefaultButton(title: "OK") {
+            defaults.set(1, forKey: "superlikes")
+            print("Ah, maybe next time :)")
+        }
+        
+        popup.addButtons([getMoreButton, okButton])
+        self.present(popup, animated: true, completion: nil)
+    }
+
 }
 
 
 extension UIImage {
+    func resizeImageForMatch(newSize: CGSize) -> UIImage {
+        let aspectWidth = newSize.width / self.size.width
+        let aspectHeight = newSize.height / self.size.height
+        let aspectRatio = min(aspectWidth, aspectHeight)
+        
+        var scaledImageRect = CGRect.zero
+        scaledImageRect.size.width = self.size.width * aspectRatio;
+        scaledImageRect.size.height = self.size.height * aspectRatio;
+        scaledImageRect.origin.x = (newSize.width - scaledImageRect.size.width) / 2.0
+        scaledImageRect.origin.y = (newSize.height - scaledImageRect.size.height) / 2.0
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 0)
+        self.draw(in: scaledImageRect)
+        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return scaledImage!
+    }
+    
     func resizeImage(targetSize: CGSize) -> UIImage {
         let size = self.size
         let widthRatio  = targetSize.width  / size.width
@@ -184,6 +345,12 @@ extension UIImage {
         
         return UIImage(cgImage: ctx.makeImage()!)
     }
+    
+    func modifyForUpload() -> UIImage {
+        let resized = self.resizeImage(targetSize: CGSize(width: 1125, height: 2436))
+        let compressed = UIImage(data: UIImageJPEGRepresentation(resized, 0.3)!)!
+        return compressed
+    }
 }
 
 /**
@@ -250,11 +417,31 @@ public extension CKAsset {
         
         return destinationPath
     }
-    
-    
 }
 
-extension UIColor{
+extension UITableView {
+    func hasRow(at indexPath: IndexPath) -> Bool {
+        return indexPath.section < self.numberOfSections && indexPath.row < self.numberOfRows(inSection: indexPath.section)
+    }
+    
+    func getHeight() -> CGFloat {
+        var height: CGFloat = 0
+        for i in 0..<self.numberOfSections {
+            for row in 0..<self.numberOfRows(inSection: i) {
+                height += self.cellForRow(at: IndexPath(row: row, section: i))!.frame.height
+            }
+        }
+        return height
+    }
+}
+
+extension String {
+    func trim() -> String {
+        return self.trimmingCharacters(in: CharacterSet.whitespaces)
+    }
+}
+
+extension UIColor {
     class func rbg(r: CGFloat, g: CGFloat, b: CGFloat) -> UIColor {
         let color = UIColor.init(red: r/255, green: g/255, blue: b/255, alpha: 1)
         return color
