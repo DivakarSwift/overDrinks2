@@ -101,20 +101,9 @@ class ClusterResultsVC: UIViewController, UITableViewDelegate, UITableViewDataSo
         
         cell.superlikeView.image = annotations[indexPath.row].superlike ? UIImage(named: "roundedLogo") : nil
         
-        if annotations[indexPath.row].buy && annotations[indexPath.row].receive {
-            cell.statusLabel.text = "Wants to buy or receive a drink"
-            cell.indicatorView.backgroundColor = UIColor(red: 129/255, green: 144/255, blue: 255/255, alpha: 0.4)
-            //cell.backgroundColor = UIColor(red: 129/255, green: 144/255, blue: 255/255, alpha: 0.4)
-        }
-        else if annotations[indexPath.row].buy {
-            cell.statusLabel.text = "Wants to buy someone a drink"
-            cell.indicatorView.backgroundColor = UIColor(red: 65/255, green: 181/255, blue: 86/255, alpha: 0.4)
+        if annotations[indexPath.row].buy {
+            //cell.indicatorView.backgroundColor = UIColor(red: 65/255, green: 181/255, blue: 86/255, alpha: 0.4)
             //cell.backgroundColor = UIColor(red: 65/255, green: 181/255, blue: 86/255, alpha: 0.4)
-        }
-        else if annotations[indexPath.row].receive {
-            cell.statusLabel.text = "Wants to receive a drink"
-            cell.indicatorView.backgroundColor = UIColor(red: 250/255, green: 128/255, blue: 114/255, alpha: 0.4)
-            //cell.backgroundColor = UIColor(red: 250/255, green: 128/255, blue: 114/255, alpha: 0.4)
         }
         
         if annotations[indexPath.row].superlike {

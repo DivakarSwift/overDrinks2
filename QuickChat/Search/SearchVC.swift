@@ -378,9 +378,7 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
             
             return view
         }
-        else {
-            guard let annotation = annotation as? PeopleAnnotation, let style = annotation.style else { return nil }
-            
+        else if let annotation = annotation as? PeopleAnnotation {
             if annotation.superlike {
                 let identifier = "logo"
                 var view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
@@ -424,6 +422,7 @@ class SearchVC: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, 
                 return view
             }
         }
+        return nil
     }
     
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
